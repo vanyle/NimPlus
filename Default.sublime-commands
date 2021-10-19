@@ -1,0 +1,7 @@
+[
+	{
+		"id": "SublimeNim",
+		"caption": "Compile the current file",
+		"command": "compile"
+	}
+]
