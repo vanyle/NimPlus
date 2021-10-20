@@ -71,6 +71,7 @@ def escape(html):
 
 suggest_process = None
 suggest_out = None
+settings = None
 
 def attempt_start_suggest(filepath):
 	global suggest_process,suggest_out
@@ -118,7 +119,9 @@ def fetch_suggestions(filepath,line,col):
 # Hook to Package Manager events !
 
 def plugin_loaded():
+	global settings
 	from package_control import events
+	settings = sublime.load_settings('sublime_nim.sublime-settings')
 
 	if events.install(package_name):
 		print('Installed %s!' % events.install(package_name))
@@ -150,7 +153,10 @@ if int(sublime.version()) < 3000:
 maxErrorRegionCount = 0
 class SublimeNimEvents(sublime_plugin.EventListener):
 	def on_post_save_async(self,view):
-		global maxErrorRegionCount
+		global maxErrorRegionCount,settings
+		if not settings.get("sublimenim.savecheck"):
+			return
+
 		filepath = view.file_name()
 		if type(filepath) != str or not view.match_selector(0, "source.nim"):
 			return
@@ -203,6 +209,9 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 			terminate(check_process)
 	def on_hover(self, view, point, hover_zone):
 		# Show documentation and handle the "GOTO definition"
+		global settings
+		if not settings.get("sublimenim.hoverdescription"):
+			return
 		filepath = view.file_name()
 		if type(filepath) != str or not view.match_selector(point, "source.nim"):
 			return
@@ -289,6 +298,9 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 			print("Unexpected error:", sys.exc_info()[0])
 			pass
 	def on_query_completions(self, view, prefix, locations):
+		global settings
+		if not settings.get("sublimenim.autocomplete"):
+			return
 		filepath = view.file_name()
 		if type(filepath) != str or not view.match_selector(locations[0], "source.nim"):
 			return
@@ -330,7 +342,6 @@ class CompileNimCommand(sublime_plugin.WindowCommand):
 		
 		# "--stdout:on"
 		com = ["nim","c","--colors",filepath]
-		print(" ".join(com))
 
 		proc,stdout,stderr = start(com,True)
 		self.window.destroy_output_panel("compilation")
@@ -342,9 +353,7 @@ class CompileNimCommand(sublime_plugin.WindowCommand):
 				time.sleep(0.01)
 				while not stdout.empty():
 					l = stdout.get(block=False)
-					print(l)
 					l = l.decode("utf-8")
-					# new_view.run_command("append", {"characters": "[31m"})
 					new_view.run_command("append", {"characters": l})
 			# Apply the ANSI theme at the end because it's readonly.
 			new_view.run_command("ansi", args={"clear_before": True})

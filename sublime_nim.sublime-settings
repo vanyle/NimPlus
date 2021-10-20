@@ -1,6 +1,6 @@
 {
     
-    "nimcheck.on_save": true,
-    "typeinfo.on_hover": true,
-    "showdef.on_hover":true
+    "sublimenim.savecheck": true,
+    "sublimenim.autocomplete": true,
+    "sublimenim.hoverdescription":true
 }

@@ -18,12 +18,6 @@ Features
 
 ![demo](example.png)
 
-TODO (Ordered by priority)
--------
-* Handle settings
-* Polish features
-* Write doc
-
 Installation
 ------------
 
@@ -40,25 +34,31 @@ If you have other packages installed, you probably also have already installed *
 Settings, Usage and Tips
 ------------------------
 
-Depending on how much you want Sublime to behave as an IDE or as a text editor, you can toggle the following features:
+Depending on how much you want Sublime to behave as an IDE or as a text editor, you can toggle the following features.
+You can see all the toggles inside your preference file.
+Open it with: Preferences > Package Settings > SublimeNim > Settings - Default
 
 ## Error highlighting
 
-
-Add `"show_definitions": false` in your settings file to disable the default sublime text definitions and
-use the SublimeNim definitions instead.
-
-See Preferences -> PackageSettings -> SublimeNim
+Toggle with `sublimenim.savecheck`
 
 ## Tooltips
 
+Toggle with `sublimenim.hoverdescription`
 
+Will show the types and the docstring of the variable and procedure you hover over.
 
 ## Auto completion
 
-This means <kbd>Ctrl</kbd>+<kbd>Space</kbd> has to be pressed again to fetch Nim compiler completions.
-It can also be set into an immediate mode.
+Toggle with `sublimenim.autocomplete`
 
+Will propose completion options based on `nimsuggest`'s `sug` feature.
+
+
+TODO
+-------
+I think there are memory leaks when reloading the plugin because
+of program handles that are not closed. Fix those.
 
 Contributing
 ------------
