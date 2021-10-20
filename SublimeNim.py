@@ -34,6 +34,7 @@ def start(args,outputManager = False):
 		t = Thread(target=enqueue_output, args=(p.stdout, q))
 		t.daemon = True # thread dies with the program
 		t.start()
+	# todo: close t when p dies
 	return p,q
 
 def read(process):
@@ -50,6 +51,10 @@ def terminate(process):
 	process.stdin.close()
 	process.terminate()
 	process.wait(timeout=0.2)
+# sanitize html:
+def escape(html):
+	return html.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&#39;')
+
 
 suggest_process = None
 suggest_out = None
@@ -93,7 +98,7 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 				# Don't run the suggest on start up, just once a file is saved.
 				suggest_process,suggest_out = start(["nimsuggest.exe","--stdin","--debug",filepath],True)
 				while not suggest_out.empty(): # flush read.
-					print(suggest_out.get(block=False))
+					suggest_out.get(block=False)
 			# run check process
 			check_process = start(["nim.exe","check","--stdout:on","--verbosity:0",filepath])[0]
 			counter = 0
@@ -113,9 +118,6 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 					col = int(col)
 
 					description = check_message[end+1:]
-					# sanitize html:
-					def escape(html):
-						return html.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&#39;')
 					description = escape(description)
 					msg_type = description.split(":")[0]
 
@@ -125,11 +127,11 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 					counter += 1
 
 					def on_close():
-						pass
+						view.erase_regions(regionId)
 					def on_navigate():
 						pass
 
-					print(msg_type)
+					# print(msg_type)
 					rcolor = "#f00" if msg_type.strip() == "Error" else "#00f"
 					regcolor = "region.redish" if msg_type.strip() == "Error" else "region.cyanish"
 
@@ -145,9 +147,10 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 						on_close) # left border
 			terminate(check_process)
 	def on_hover(self, view, point, hover_zone):
+		# Show documentation and handle the "GOTO definition"
 		global suggest_process,suggest_out
 		filepath = view.file_name()
-		if not filepath.endswith(".nim"):
+		if type(filepath) != str or not filepath.endswith(".nim"):
 			return
 		if suggest_process == None:
 			# Don't run the suggest on start up, just once a file is saved.
@@ -160,24 +163,77 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 		line += 1 # line are 1-indexed for nim.
 		query = "def \"" + filepath + "\":" + str(line) + ":" + str(col)
 
+		while not suggest_out.empty(): # flush
+			suggest_out.get(block=False)
+
 		write(suggest_process,query)
-		time.sleep(1)
+		time.sleep(.2)
 		try:
-			response = suggest_out.get(block=False,timeout=3)
+			data = []
 			while not suggest_out.empty(): # flush read.
-				suggest_out.get(block=False)
-			data = response.decode("utf-8").split("\t")
+				tmp = suggest_out.get(block=False,timeout=1)
+				data = tmp.decode("utf-8").split("\t")
+				if len(data) == 9:
+					break
+
 			# data[1] = skVar
 			# data[2] = filename.symbolname
 			# data[3] = type
 			# data[4] = file of definition
 			# data[5] = line of definition
 			# data[6] = col of definition
-			# data[7] = Doc string 
+			# data[7] = Doc string
 			if len(data) == 9:
-				print(data)
-		except:
+				docstr = data[7].replace("\\x0A","\n")[1:-1]
+				body = """
+					<style>
+						h4{ margin:0;padding:0; }
+					</style>
+					<h4>%s</h4>
+					<div>
+					<a href="%s,%s,%s">%s(%s,%s)</a>
+					</div>
+					<div>
+						%s
+					</div>
+				""" % (escape(data[3]),
+						data[4],data[5],data[6],
+						data[4],data[5],data[6],
+					escape(docstr)) # docstr are markdown formatted.
+
+				def on_navigate(href):
+					file,line,col = href.split(",")
+					affected_view = view
+					if file != filepath:
+						affected_view = view.window().open_file(file)
+					def navigator(aview,line,col):
+						counter = 0
+						while aview.is_loading() and counter < 100:
+							time.sleep(0.03) # 30 ms
+							counter += 1
+						line = int(line)-1
+						col = int(col)
+						aview.show(aview.text_point(line,col),True,False,False)
+
+					# Do this on another thread:
+					t = Thread(target=navigator, args=(affected_view, line,col))
+					t.daemon = True # thread dies with the program
+					t.start()
+				def on_hide():
+					pass
+
+				view.show_popup(
+					body,
+					sublime.HIDE_ON_MOUSE_MOVE_AWAY,
+					point,
+					600,
+					100,
+					on_navigate,
+					on_hide
+				)
+		except Exception as err:
 			print("timeout")
+			print("Unexpected error:", sys.exc_info()[0])
 			pass
 	def on_query_completions(self, view, prefix, locations):
 		pass
