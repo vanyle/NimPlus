@@ -34,34 +34,47 @@ If you have other packages installed, you probably also have already installed *
 Settings, Usage and Tips
 ------------------------
 
+You should install the `ANSIescape` package to enjoy the syntax coloring of the terminal when building.
+This is optional.
+
 Depending on how much you want Sublime to behave as an IDE or as a text editor, you can toggle the following features.
 You can see all the toggles inside your preference file.
+
 Open it with: Preferences > Package Settings > SublimeNim > Settings - Default
 
-## Error highlighting
+### Error highlighting
 
 Toggle with `sublimenim.savecheck`
 
-## Tooltips
+After saving, will check the current file for errors. See screenshot above.
+
+### Tooltips
 
 Toggle with `sublimenim.hoverdescription`
 
 Will show the types and the docstring of the variable and procedure you hover over.
 
-## Auto completion
+### Auto completion
 
 Toggle with `sublimenim.autocomplete`
 
 Will propose completion options based on `nimsuggest`'s `sug` feature.
 
+### Build shortcuts
+
+<kbd>Ctrl</kbd>+<kbd>B</kbd> : Compile and Run the current file
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> : Compile the current file  
+
+You can change these with: Preferences > Package Settings > SublimeNim > Key Bindings - Default
 
 TODO
 -------
-I think there are memory leaks when reloading the plugin because
-of program handles that are not closed. Fix those.
+- [ ] nimble integration: Build/Run projects instead of files
+- [ ] nimble doc integration: Command to generate documentation and open it
+- [ ] Remove memory leaks when reloading the plugin because of program handles that are not closed
 
 Contributing
 ------------
 
 Pull requests are **not** welcome. Fork this project if you want to add stuff.
-Open an issue if you have a problem.in
+Open an issue if you have a problem.
