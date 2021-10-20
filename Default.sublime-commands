@@ -1,7 +1,34 @@
 [
 	{
-		"id": "SublimeNim",
-		"caption": "Compile the current file",
-		"command": "compile"
-	}
+		"caption": "SublimeNim: Compile the current Nim file",
+		"command": "compile_nim"
+	},
+	{
+		"caption":"SublimeNim: Compile and Run the current Nim file",
+		"command":"run_nim"
+	},
+	{
+		"caption":"Preferences: SublimeNim Settings – Default",
+		"command": "open_file",
+		"args": {"file": "${packages}/SublimeNim/sublime_nim.sublime-settings"},
+	},
+	{
+		"caption":"Preferences: SublimeNim Settings – User",
+		"command": "open_file",
+		"args": {"file": "${packages}/User/sublime_nim.sublime-settings"},
+	},
+	{
+        "caption": "Preferences: SublimeNim Key Bindings – Default",
+        "command": "open_file",
+        "args": {
+            "file": "${packages}/SublimeNim/Default.sublime-keymap"
+        },
+    },
+    {
+        "caption": "Preferences: SublimeNim Key Bindings – User",
+        "command": "open_file",
+        "args": {
+            "file": "${packages}/User/Default.sublime-keymap"
+        },
+    },
 ]

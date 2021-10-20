@@ -1,0 +1,101 @@
+[
+    {
+
+        "id": "tools",
+        "children":
+        [
+            {
+                "id": "packages",
+                "caption": "Packages",
+                "children":
+                [
+                    {
+                        "caption": "SublimeNim",
+                        "children":
+                        [
+                            {
+                                "caption": "Compile current file",
+                                "command": "compile_nim"
+                            },
+                            {
+                                "caption": "Compile and Run current file",
+                                "command": "run_nim"
+                            },
+                            {
+                                "caption": "Compile current project (with nimble)",
+                                "command": "compile_nimble"
+                            },
+                            {
+                                "caption": "Compile and Run current project (with nimble)",
+                                "command": "run_nimble"
+                            },
+                            {
+                                "caption": "-"
+                            },
+                            {
+                                "caption": "Generate documentation (with nimble)",
+                                "command": "document_nimble"
+                            },
+                            {
+                                "caption": "Refresh package list (with nimble)",
+                                "command": "refresh_nimble"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "preferences",
+        "children":
+        [
+            {
+                "caption": "Package Settings",
+                "id": "package-settings",
+                "children":
+                [
+                    {
+                        "caption": "SublimeNim",
+                        "children":
+                        [
+                            {
+                                "command": "open_file",
+                                "args": {"file": "${packages}/SublimeNim/sublime_nim.sublime-settings"},
+                                "caption": "Settings – Default"
+                            },
+                            {
+                                "command": "open_file",
+                                "args": {"file": "${packages}/User/sublime_nim.sublime-settings"},
+                                "caption": "Settings – User"
+                            },
+                            { "caption": "-" },
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/SublimeNim/Default.sublime-keymap"
+                                },
+                                "caption": "Key Bindings – Default"
+                            },
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/User/Default.sublime-keymap"
+                                },
+                                "caption": "Key Bindings – User"
+                            },
+                            { "caption": "-" },
+                            {
+                                "caption": "Github",
+                                "command": "sublime_nim_open_site",
+                                "args": {
+                                    "url": "http://github.com/vanyle/SublimeNim"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -1,0 +1,10 @@
+[
+	{
+		"keys":["ctrl+b"],
+		"command":"run_nim"
+	},
+	{
+		"keys":["ctrl+shift+b"],
+		"command":"compile_nim"
+	},
+]

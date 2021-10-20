@@ -2,6 +2,5 @@
     
     "nimcheck.on_save": true,
     "typeinfo.on_hover": true,
-    "showdef.on_hover":true,
-    "complete.key":"Ctrl+Space"
+    "showdef.on_hover":true
 }

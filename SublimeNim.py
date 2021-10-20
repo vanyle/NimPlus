@@ -1,9 +1,12 @@
-import sublime
 import sublime_plugin
+import sublime
 import subprocess
-from threading  import Thread
+
+from threading import Thread
 import sys
 import time
+
+
 
 try:
 	from queue import Queue, Empty
@@ -17,35 +20,45 @@ def enqueue_output(out, queue):
 		# print(queue.qsize(),line)
 	out.close()
 
+
 package_name = 'SublimeNim'
 
 # Used for executable management
 def start(args,outputManager = False):
+	# print("Running: "," ".join(args))
 	p = subprocess.Popen(
 		args,
 		stdin=subprocess.PIPE,
 		stdout=subprocess.PIPE,
 		stderr=subprocess.PIPE,
-		shell=True, bufsize=1, close_fds=ON_POSIX
+		shell=True, bufsize=1
 	)
 	q = None
+	q2 = None
 	if outputManager:
 		q = Queue()
+		q2 = Queue()
 		t = Thread(target=enqueue_output, args=(p.stdout, q))
-		t.daemon = True # thread dies with the program
+		t2 = Thread(target=enqueue_output, args=(p.stderr, q))
+		t.daemon = True
+		t2.daemon = True
 		t.start()
+		t2.start()
 	# todo: close t when p dies
-	return p,q
+	return p,q,q2
 
 def read(process):
 	return process.stdout.readline().decode("utf-8").strip()
 
 
 def write(process, message):
-	process.stdin.write(message.strip().encode("utf-8"))
-	process.stdin.write("\r\n".encode("utf-8"))
-	process.stdin.flush()
-
+	try:
+		process.stdin.write(message.strip().encode("utf-8"))
+		process.stdin.write("\r\n".encode("utf-8"))
+		process.stdin.flush()
+		return True
+	except:
+		return False # error probably because the process died.
 
 def terminate(process):
 	process.stdin.close()
@@ -58,6 +71,50 @@ def escape(html):
 
 suggest_process = None
 suggest_out = None
+
+def attempt_start_suggest(filepath):
+	global suggest_process,suggest_out
+	if suggest_process == None:
+		# Don't run the suggest on start up, just once a file is saved.
+		suggest_process,suggest_out, dump = start(["nimsuggest.exe","--stdin","--debug",filepath],True)
+		time.sleep(1)
+		while not suggest_out.empty(): # flush read.
+			suggest_out.get(block=False)
+
+
+def fetch_suggestions(filepath,line,col):
+	global suggest_process,suggest_out
+	attempt_start_suggest(filepath)
+
+	line += 1 # line are 1-indexed for nim.
+	query = "sug \"" + filepath + "\":" + str(line) + ":" + str(col)
+	while not suggest_out.empty(): # flush
+		suggest_out.get(block=False)
+
+	res = write(suggest_process,query)
+	if not res: # process died
+		suggest_process = None
+		return
+	while suggest_out.empty():
+		time.sleep(.01)
+	try:
+		suggestions = []
+		while not suggest_out.empty(): # flush read.
+			tmp = suggest_out.get(block=False,timeout=1)
+			data = tmp.decode("utf-8").split("\t")
+			# print(len(data),data)
+			if len(data) == 10:
+				suggestions.append(data)
+			if len(suggestions) > 1000:
+				break # no need for tones of suggestions.
+
+		while not suggest_out.empty(): suggest_out.get(block=False,timeout=1)
+		return suggestions
+		
+	except Exception as err:
+		print("Unexpected error:", sys.exc_info()[0])
+		return []
+
 # Hook to Package Manager events !
 
 def plugin_loaded():
@@ -89,75 +146,68 @@ if int(sublime.version()) < 3000:
 	plugin_loaded()
 	unload_handler = plugin_unloaded
 
+
+maxErrorRegionCount = 0
 class SublimeNimEvents(sublime_plugin.EventListener):
 	def on_post_save_async(self,view):
-		global suggest_process,suggest_out
+		global maxErrorRegionCount
 		filepath = view.file_name()
-		if filepath.endswith(".nim"):
-			if suggest_process == None:
-				# Don't run the suggest on start up, just once a file is saved.
-				suggest_process,suggest_out = start(["nimsuggest.exe","--stdin","--debug",filepath],True)
-				while not suggest_out.empty(): # flush read.
-					suggest_out.get(block=False)
-			# run check process
-			check_process = start(["nim.exe","check","--stdout:on","--verbosity:0",filepath])[0]
-			counter = 0
+		if type(filepath) != str or not view.match_selector(0, "source.nim"):
+			return
+		# run check process
+		check_process = start(["nim.exe","check","--stdout:on","--verbosity:0",filepath])[0]
+		stdout,stderr = check_process.communicate(timeout=3)
+		for i in range(maxErrorRegionCount+1):
+			view.erase_regions("e" + str(i))
 
-			for i in range(10):
-				view.erase_regions("e" + str(i))
+		lines = stdout.decode("utf-8").split("\n")
+		maxErrorRegionCount = 0
+		for check_message in lines:
+			if len(check_message) > 3 and check_message.startswith(filepath):
+				check_message = check_message[len(filepath):]
+				# (line, col) Verbosity: Decription [Code]
+				end = check_message.find(")")
+				position = check_message[check_message.find("(")+1:end]
+				line,col = position.split(",")
+				line = int(line)
+				col = int(col)
 
-			while check_process.poll() == None:
-				check_message = read(check_process)
-				if len(check_message) > 0 and check_message.startswith(filepath):
-					check_message = check_message[len(filepath):]
-					# (line, col) Verbosity: Decription [Code]
-					end = check_message.find(")")
-					position = check_message[check_message.find("(")+1:end]
-					line,col = position.split(",")
-					line = int(line)
-					col = int(col)
+				description = check_message[end+1:]
+				description = escape(description)
+				msg_type = description.split(":")[0]
 
-					description = check_message[end+1:]
-					description = escape(description)
-					msg_type = description.split(":")[0]
+				pointStart = view.text_point(line-1,col-1)
 
-					pointStart = view.text_point(line-1,col-1)
+				regionId = "e" + str(maxErrorRegionCount)
+				maxErrorRegionCount += 1
 
-					regionId = "e" + str(counter)
-					counter += 1
+				def on_close():
+					view.erase_regions(regionId)
+				def on_navigate():
+					pass
 
-					def on_close():
-						view.erase_regions(regionId)
-					def on_navigate():
-						pass
+				# print(msg_type)
+				rcolor = "#f00" if msg_type.strip() == "Error" else "#00f"
+				regcolor = "region.redish" if msg_type.strip() == "Error" else "region.cyanish"
 
-					# print(msg_type)
-					rcolor = "#f00" if msg_type.strip() == "Error" else "#00f"
-					regcolor = "region.redish" if msg_type.strip() == "Error" else "region.cyanish"
-
-					view.add_regions(
-						regionId,
-						[sublime.Region(pointStart, pointStart)],
-						"region.redish",
-						"comment",
-						sublime.DRAW_EMPTY,
-						[description], # HTML format
-						rcolor,
-						on_navigate,
-						on_close) # left border
+				view.add_regions(
+					regionId,
+					[sublime.Region(pointStart, pointStart)],
+					"region.redish",
+					"comment",
+					sublime.DRAW_EMPTY,
+					[description], # HTML format
+					rcolor,
+					on_navigate,
+					on_close) # left border
 			terminate(check_process)
 	def on_hover(self, view, point, hover_zone):
 		# Show documentation and handle the "GOTO definition"
-		global suggest_process,suggest_out
 		filepath = view.file_name()
-		if type(filepath) != str or not filepath.endswith(".nim"):
+		if type(filepath) != str or not view.match_selector(point, "source.nim"):
 			return
-		if suggest_process == None:
-			# Don't run the suggest on start up, just once a file is saved.
-			suggest_process,suggest_out = start(["nimsuggest.exe","--stdin","--debug",filepath],True)
-			time.sleep(1)
-			while not suggest_out.empty(): # flush read.
-				suggest_out.get(block=False)
+		global suggest_process,suggest_out
+		attempt_start_suggest(filepath)
 			
 		line,col = view.rowcol(point)
 		line += 1 # line are 1-indexed for nim.
@@ -166,8 +216,12 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 		while not suggest_out.empty(): # flush
 			suggest_out.get(block=False)
 
-		write(suggest_process,query)
-		time.sleep(.2)
+		res = write(suggest_process,query)
+		if not res: # process died
+			suggest_process = None
+			return
+		while suggest_out.empty():
+			time.sleep(.01)
 		try:
 			data = []
 			while not suggest_out.empty(): # flush read.
@@ -232,15 +286,104 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 					on_hide
 				)
 		except Exception as err:
-			print("timeout")
 			print("Unexpected error:", sys.exc_info()[0])
 			pass
 	def on_query_completions(self, view, prefix, locations):
-		pass
-		# We can return a completion list here.
+		filepath = view.file_name()
+		if type(filepath) != str or not view.match_selector(locations[0], "source.nim"):
+			return
+		global suggest_process,suggest_out
+		
+		line,col = view.rowcol(locations[0])
+		lst = sublime.CompletionList()
 
-class CompileCommand(sublime_plugin.TextCommand):
-	def run(self, edit):
-		# Compile or smth
-		filepath = self.view.file_name()
-		# self.view.insert(edit, 0, "Hello, World!")
+		# Fetch the suggestions async.
+		def fillCompletions(lst,prefix):
+			suggestions = fetch_suggestions(filepath,line,col)
+			# print([i[2] for i in suggestions])
+			completions = []
+			for i in suggestions:
+				docstr = i[7].replace("\\x0A","\n")[1:-1]
+				item = sublime.CompletionItem(
+					i[2], # trigger is empty.
+					i[3], # annotation (displayed on the right)
+					i[2], # completion (will be inserted)
+					details="<div>%s</div>" % escape(docstr)
+				)
+				completions.append(item)
+			lst.set_completions(completions)
+
+		t = Thread(target=fillCompletions, args=(lst,prefix,))
+		t.daemon = True
+		t.start()
+
+		return lst
+
+class CompileNimCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		view = self.window.active_view()
+
+		point = view.sel()[0].begin()
+		filepath = view.file_name()
+		if type(filepath) != str or not view.match_selector(point, "source.nim"):
+			return
+		
+		# "--stdout:on"
+		com = ["nim","c","--colors",filepath]
+		print(" ".join(com))
+
+		proc,stdout,stderr = start(com,True)
+		self.window.destroy_output_panel("compilation")
+		new_view = self.window.create_output_panel("compilation",False)
+		self.window.run_command("show_panel", {"panel": "output.compilation"})
+		
+		def async_fill():
+			while proc.poll() is None:
+				time.sleep(0.01)
+				while not stdout.empty():
+					l = stdout.get(block=False)
+					print(l)
+					l = l.decode("utf-8")
+					# new_view.run_command("append", {"characters": "[31m"})
+					new_view.run_command("append", {"characters": l})
+			# Apply the ANSI theme at the end because it's readonly.
+			new_view.run_command("ansi", args={"clear_before": True})
+		t = Thread(target=async_fill)
+		t.daemon = True
+		t.start()
+
+class RunNimCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		view = self.window.active_view()
+		point = view.sel()[0].begin()
+		filepath = view.file_name()
+		if type(filepath) != str or not view.match_selector(point, "source.nim"):
+			return
+		
+		# "--stdout:on"
+		com = ["nim","r","--colors",filepath]
+		print(" ".join(com))
+
+		proc,stdout,stderr = start(com,True)
+		self.window.destroy_output_panel("compilation")
+		new_view = self.window.create_output_panel("compilation",False)
+		self.window.run_command("show_panel", {"panel": "output.compilation"})
+		
+		def async_fill():
+			while proc.poll() is None:
+				time.sleep(0.01)
+				while not stdout.empty():
+					l = stdout.get(block=False)
+					print(l)
+					l = l.decode("utf-8")
+					# new_view.run_command("append", {"characters": "[31m"})
+					new_view.run_command("append", {"characters": l})
+			# Apply the ANSI theme at the end because it's readonly.
+			new_view.run_command("ansi", args={"clear_before": True})
+		t = Thread(target=async_fill)
+		t.daemon = True
+		t.start()
+
+class SublimeNimOpenSiteCommand(sublime_plugin.WindowCommand):
+	def run(self, args):
+		print(args)
