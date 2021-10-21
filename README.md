@@ -5,8 +5,8 @@ Nim Programming Language plugin for Sublime Text 4
 
 Requires version 4073 or higher.
 
-Q: Why not use NimLime ?
-A: NimLime dropped support for NimSuggest and Nimble (in order to update to Sublime Text 3 if I understand currently.)
+- Q: Why not use NimLime ?
+- A: NimLime dropped support for NimSuggest and Nimble (in order to update to Sublime Text 3 if I understand currently.)
 The project looks dead now (or at least, it's not updated much), so I decided to create my own nim package which targets *Sublime Text 4* and makes use of all the cool new APIs.
 
 Features
@@ -64,6 +64,8 @@ Toggle with `sublimenim.autocomplete`
 
 Will propose completion options based on `nimsuggest`'s `sug` feature.
 
+You need to enable `autocompletion` in *Sublime Text* settings
+
 ### Build shortcuts
 
 <kbd>Ctrl</kbd>+<kbd>B</kbd> : Compile and Run the current nimble project
@@ -72,7 +74,7 @@ Will propose completion options based on `nimsuggest`'s `sug` feature.
 You can change these with: Preferences > Package Settings > SublimeNim > Key Bindings - Default
 
 Possible configuration:
-```json
+```js
 [
 	{
 		"keys":["ctrl+b"],
@@ -89,22 +91,18 @@ Possible configuration:
 When building, the result will be shown inside the *Sublime Text* terminal.
 You might want to change this behavior. The first settings controls the regular builds and the second setting controls the nimble builds. The compilation will always occur inside the *Sublime Text* terminal, only the run command can be customized.
 
-```json
-	// possible values:
-	// `[]` => Use the Sublime Text terminal (readonly)
-	// `["wt"]` => Use Windows Terminal
-	// `["start","cmd","/k"]` => Please use something more modern ...
-	// `["start","powershell","-Command"]` => Use Powershell
-    "sublimenim.nim.console":["wt"],
-    "sublimenim.nimble.console":["wt"],
+```js
+// possible values:
+// `[]` => Use the Sublime Text terminal (readonly)
+// `["wt"]` => Use Windows Terminal
+// `["start","cmd","/k"]` => Please use something more modern ...
+// `["start","powershell","-Command"]` => Use Powershell
+{
+	// other values ...
+	"sublimenim.nim.console":["wt"],
+	"sublimenim.nimble.console":["wt"]
+}
 ```
-
-
-TODO
--------
-- [ ] nimble integration: Build/Run projects instead of files
-- [ ] nimble doc integration: Command to generate documentation and open it
-- [ ] Remove memory leaks when reloading the plugin because of program handles that are not closed
 
 Contributing
 ------------
