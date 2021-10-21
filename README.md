@@ -5,6 +5,10 @@ Nim Programming Language plugin for Sublime Text 4
 
 Requires version 4073 or higher.
 
+Q: Why not use NimLime ?
+A: NimLime dropped support for NimSuggest and Nimble (in order to update to Sublime Text 3 if I understand currently.)
+The project looks dead now (or at least, it's not updated much), so I decided to create my own nim package which targets *Sublime Text 4* and makes use of all the cool new APIs.
+
 Features
 --------
 
@@ -62,10 +66,39 @@ Will propose completion options based on `nimsuggest`'s `sug` feature.
 
 ### Build shortcuts
 
-<kbd>Ctrl</kbd>+<kbd>B</kbd> : Compile and Run the current file
-<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> : Compile the current file  
+<kbd>Ctrl</kbd>+<kbd>B</kbd> : Compile and Run the current nimble project
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> : Compile the current nimble project   
 
 You can change these with: Preferences > Package Settings > SublimeNim > Key Bindings - Default
+
+Possible configuration:
+```json
+[
+	{
+		"keys":["ctrl+b"],
+		"command":"run_nim" // put run_nim or run_nimble depending on if you use nim more as a scripting tool or for big projects.
+	},
+	{
+		"keys":["ctrl+shift+b"],
+		"command":"compile_nim"
+	},
+
+]
+```
+
+When building, the result will be shown inside the *Sublime Text* terminal.
+You might want to change this behavior. The first settings controls the regular builds and the second setting controls the nimble builds. The compilation will always occur inside the *Sublime Text* terminal, only the run command can be customized.
+
+```json
+	// possible values:
+	// `[]` => Use the Sublime Text terminal (readonly)
+	// `["wt"]` => Use Windows Terminal
+	// `["start","cmd","/k"]` => Please use something more modern ...
+	// `["start","powershell","-Command"]` => Use Powershell
+    "sublimenim.nim.console":["wt"],
+    "sublimenim.nimble.console":["wt"],
+```
+
 
 TODO
 -------

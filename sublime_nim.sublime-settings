@@ -2,5 +2,7 @@
     
     "sublimenim.savecheck": true,
     "sublimenim.autocomplete": true,
-    "sublimenim.hoverdescription":true
+    "sublimenim.hoverdescription":true,
+    "sublimenim.nim.console":["wt"],
+    "sublimenim.nimble.console":["start","powershell","-Command"]
 }

@@ -1,11 +1,11 @@
 import sublime_plugin
 import sublime
 import subprocess
-
+import webbrowser
 from threading import Thread
 import sys
 import time
-
+import pathlib
 
 
 try:
@@ -24,10 +24,11 @@ def enqueue_output(out, queue):
 package_name = 'SublimeNim'
 
 # Used for executable management
-def start(args,outputManager = False):
+def start(args,outputManager = False,cwd = None):
 	# print("Running: "," ".join(args))
 	p = subprocess.Popen(
 		args,
+		cwd=cwd,
 		stdin=subprocess.PIPE,
 		stdout=subprocess.PIPE,
 		stderr=subprocess.PIPE,
@@ -161,13 +162,22 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 		if type(filepath) != str or not view.match_selector(0, "source.nim"):
 			return
 		# run check process
+		view.window().status_message("Checking program validity ...")
+
 		check_process = start(["nim.exe","check","--stdout:on","--verbosity:0",filepath])[0]
-		stdout,stderr = check_process.communicate(timeout=3)
+		stdout,stderr = None,None
+		try:
+			stdout,stderr = check_process.communicate(timeout=8)
+		except:
+			view.window().status_message("Check failed. Timeout")
+			return
+
 		for i in range(maxErrorRegionCount+1):
 			view.erase_regions("e" + str(i))
 
 		lines = stdout.decode("utf-8").split("\n")
 		maxErrorRegionCount = 0
+
 		for check_message in lines:
 			if len(check_message) > 3 and check_message.startswith(filepath):
 				check_message = check_message[len(filepath):]
@@ -207,6 +217,7 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 					on_navigate,
 					on_close) # left border
 			terminate(check_process)
+		view.window().status_message("Check completed.")
 	def on_hover(self, view, point, hover_zone):
 		# Show documentation and handle the "GOTO definition"
 		global settings
@@ -331,68 +342,172 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 
 		return lst
 
+proc = None
+
+
+
+
+def execute_nim_command_on_file(commands,comobj):
+	global proc
+	view = comobj.window.active_view()
+
+	point = view.sel()[0].begin()
+	filepath = view.file_name()
+	if type(filepath) != str or not view.match_selector(point, "source.nim"):
+		return
+	if proc != None and proc.poll() is None: # kill the running process.
+		proc.terminate()
+
+	# "--stdout:on"
+	com = commands
+	com.append(filepath)
+	proc,stdout,stderr = start(com,True)
+	comobj.window.destroy_output_panel("compilation")
+	new_view = comobj.window.create_output_panel("compilation",False)
+	comobj.window.run_command("show_panel", {"panel": "output.compilation"})
+	
+	def async_fill():
+		while proc.poll() is None:
+			time.sleep(0.01)
+			while not stdout.empty():
+				l = stdout.get(block=False)
+				l = l.decode("utf-8")
+				new_view.run_command("append", {"characters": l})
+		# Apply the ANSI theme at the end because it's readonly.
+		new_view.run_command("ansi", args={"clear_before": True})
+	t = Thread(target=async_fill)
+	t.daemon = True
+	t.start()
+def execute_nim_command_on_project(commands,comobj,noFilename = False):
+	# commands is an array like ["nim","doc"] for example.
+	global proc
+
+	view = comobj.window.active_view()
+	point = view.sel()[0].begin()
+	filepath = view.file_name()
+	if type(filepath) != str or not view.match_selector(point, "source.nim"):
+		return
+	if proc != None and proc.poll() is None: # kill the running process.
+		proc.terminate()
+
+	p = pathlib.Path(filepath)
+	found = False
+	for i in range(100):
+		if str(p) == str(p.parent):
+			break
+		if not p.is_dir():
+			p = p.parent
+			continue
+		files = [x for x in p.iterdir() if (x.name.endswith(".nimble") and x.is_file())]
+		if len(files) <= 0:
+			p = p.parent
+			continue
+		else:
+			print(len(files),files)
+			found = True
+			break
+
+	# move up the filepath until we find a .nimble file. 
+	if not found:
+		comobj.window.destroy_output_panel("compilation")
+		new_view = comobj.window.create_output_panel("compilation",False)
+		comobj.window.run_command("show_panel", {"panel": "output.compilation"})
+		new_view.run_command("append", {"characters": "The file is not part of a nimble project.\n"})
+		new_view.run_command("append", {"characters": "Run 'nimble init' to create a nimble project here."})
+		new_view.run_command("ansi", args={"clear_before": True})
+		return
+
+	# "--stdout:on"
+	com = commands
+	if not noFilename:
+		com.append(filepath)
+
+	proc,stdout,stderr = start(com,True,cwd = str(p))
+	comobj.window.destroy_output_panel("compilation")
+	new_view = comobj.window.create_output_panel("compilation",False)
+	comobj.window.run_command("show_panel", {"panel": "output.compilation"})
+	
+	def async_fill():
+		while proc.poll() is None:
+			time.sleep(0.01)
+			while not stderr.empty():
+				l = stderr.get(block=False)
+				l = l.decode("utf-8")
+				new_view.run_command("append",{"characters":l})
+			while not stdout.empty():
+				l = stdout.get(block=False)
+				l = l.decode("utf-8")
+				new_view.run_command("append", {"characters": l})
+		# Apply the ANSI theme at the end because it's readonly.
+		new_view.run_command("ansi", args={"clear_before": True})
+	t = Thread(target=async_fill)
+	t.daemon = True
+	t.start()
+
 class CompileNimCommand(sublime_plugin.WindowCommand):
 	def run(self):
-		view = self.window.active_view()
-
-		point = view.sel()[0].begin()
-		filepath = view.file_name()
-		if type(filepath) != str or not view.match_selector(point, "source.nim"):
-			return
-		
-		# "--stdout:on"
-		com = ["nim","c","--colors",filepath]
-
-		proc,stdout,stderr = start(com,True)
-		self.window.destroy_output_panel("compilation")
-		new_view = self.window.create_output_panel("compilation",False)
-		self.window.run_command("show_panel", {"panel": "output.compilation"})
-		
-		def async_fill():
-			while proc.poll() is None:
-				time.sleep(0.01)
-				while not stdout.empty():
-					l = stdout.get(block=False)
-					l = l.decode("utf-8")
-					new_view.run_command("append", {"characters": l})
-			# Apply the ANSI theme at the end because it's readonly.
-			new_view.run_command("ansi", args={"clear_before": True})
-		t = Thread(target=async_fill)
-		t.daemon = True
-		t.start()
-
+		execute_nim_command_on_file(["nim","c","--colors"],self)
 class RunNimCommand(sublime_plugin.WindowCommand):
 	def run(self):
-		view = self.window.active_view()
-		point = view.sel()[0].begin()
-		filepath = view.file_name()
-		if type(filepath) != str or not view.match_selector(point, "source.nim"):
-			return
-		
-		# "--stdout:on"
-		com = ["nim","r","--colors",filepath]
-		print(" ".join(com))
+		args = settings.get("sublimenim.nim.console")
+		com = ["nim","r","--colors"]
+		if type(args) == list:
+			for i in args:
+				com.insert(0,i)
+		execute_nim_command_on_file(com,self)
 
-		proc,stdout,stderr = start(com,True)
-		self.window.destroy_output_panel("compilation")
-		new_view = self.window.create_output_panel("compilation",False)
-		self.window.run_command("show_panel", {"panel": "output.compilation"})
-		
-		def async_fill():
-			while proc.poll() is None:
-				time.sleep(0.01)
-				while not stdout.empty():
-					l = stdout.get(block=False)
-					print(l)
-					l = l.decode("utf-8")
-					# new_view.run_command("append", {"characters": "[31m"})
-					new_view.run_command("append", {"characters": l})
-			# Apply the ANSI theme at the end because it's readonly.
-			new_view.run_command("ansi", args={"clear_before": True})
-		t = Thread(target=async_fill)
-		t.daemon = True
-		t.start()
+class RunNimbleCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		args = settings.get("sublimenim.nimble.console")
+		com = ["nimble","run"]
+		if type(args) == list:
+			for i in range(len(args)):
+				com.insert(i,args[i])
+		print(com)
+		execute_nim_command_on_project(com,self,noFilename = True)
+
+class CompileNimbleCommand(sublime_plugin.WindowCommand):
+	def run(self):	
+		execute_nim_command_on_project(["nimble","build"],self,noFilename = True)
+class RefreshNimbleCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		execute_nim_command_on_project(["nimble","refresh"],self,noFilename = True)
+class CheckNimbleCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		execute_nim_command_on_project(["nimble","check"],self, noFilename = True)
+class DocumentNimCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		execute_nim_command_on_project(["nim","doc","--project","--outdir:htmldocs","--index:on"],self)
+class OpenDocumentNimCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		view = self.window.active_view()
+		filepath = view.file_name()
+		p = pathlib.Path(filepath)
+		found = False
+		for i in range(100):
+			if str(p) == str(p.parent):
+				break
+			if not p.is_dir():
+				p = p.parent
+				continue
+			files = [x for x in p.iterdir() if (x.name.endswith(".nimble") and x.is_file())]
+			if len(files) <= 0:
+				p = p.parent
+				continue
+			else:
+				print(len(files),files)
+				found = True
+				break
+
+		# move up the filepath until we find a .nimble file. 
+		if not found:
+			sublime.message_dialog("Documentation not found.")
+
+		p = p / "htmldocs/theindex.html"
+		print(p.as_uri())
+		webbrowser.open_new_tab(p.as_uri())
+
 
 class SublimeNimOpenSiteCommand(sublime_plugin.WindowCommand):
-	def run(self, args):
-		print(args)
+	def run(self, url):
+		webbrowser.open_new_tab(url)

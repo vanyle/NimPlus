@@ -8,6 +8,30 @@
 		"command":"run_nim"
 	},
 	{
+		"caption": "SublimeNim: (Nimble) Compile the Nim project",
+		"command": "compile_nimble"
+	},
+	{
+		"caption":"SublimeNim: (Nimble) Compile and Run the Nim project",
+		"command":"run_nimble"
+	},
+	{
+        "caption": "SublimeNim: Generate documentation",
+        "command": "document_nim"
+    },
+    {
+    	"caption":"SublimeNim: Open the documentation in the browser",
+    	"command":"open_document_nim"
+    },
+    {
+        "caption": "SublimeNim: (Nimble) Refresh package list",
+        "command": "refresh_nimble"
+    },
+    {
+        "caption": "SublimeNim: (Nimble) Check that the .nimble file is valid",
+        "command": "check_nimble"
+    },
+	{
 		"caption":"Preferences: SublimeNim Settings – Default",
 		"command": "open_file",
 		"args": {"file": "${packages}/SublimeNim/sublime_nim.sublime-settings"},
