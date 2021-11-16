@@ -116,6 +116,17 @@ to disable the Custom Sublime Nim building and check the option in:
 
 Note that the *Build System* does not support `nimble`.
 
+### Usage with Terminus
+
+[Terminus](https://github.com/randy3k/Terminus) is a package that adds a real terminal
+inside Sublime Text with colored output and interaction and evverything.
+
+If it is installed, you can run your programs inside of it instead of the default output panel with
+the config switch
+```js
+"sublimenim.use_terminus": true
+```
+
 TODO
 -------
 
