@@ -71,7 +71,8 @@ You need to enable `autocompletion` in *Sublime Text* settings
 <kbd>Ctrl</kbd>+<kbd>B</kbd> : Compile and Run the current nimble project
 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> : Compile the current nimble project   
 
-You can change these with: Preferences > Package Settings > SublimeNim > Key Bindings - Default
+You can change these with:  
+<kbd>Preferences</kbd> > <kbd>Package Settings</kbd> > <kbd>SublimeNim</kbd> > <kbd>Key Bindings - Default</kbd>
 
 Possible configuration:
 ```js
@@ -82,7 +83,7 @@ Possible configuration:
 	},
 	{
 		"keys":["ctrl+shift+b"],
-		"command":"compile_nim"
+		"command":"compile_nim" // same here
 	},
 
 ]
@@ -103,6 +104,24 @@ You might want to change this behavior. The first settings controls the regular 
 	"sublimenim.nimble.console":["wt"]
 }
 ```
+
+By default, SublimeNim does not use the *Build System* integrated into Sublime Text.
+Instead, SublimeNim uses custom commands that perform the building. This allows us
+to control what terminal is used to run the command and other options.
+
+If you prefer using *Build System*, comment the lines inside the `Key Bindings - Default` files
+to disable the Custom Sublime Nim building and check the option in:
+
+<kbd>Tools</kbd> > <kbd>Build System</kbd> > <kbd>Nim</kbd>
+
+Note that the *Build System* does not support `nimble`.
+
+TODO
+-------
+
+- [ ] Command to run `nim pretty`
+- [ ] Integration with *Terminus*
+
 
 Contributing
 ------------
