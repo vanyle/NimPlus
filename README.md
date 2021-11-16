@@ -120,7 +120,6 @@ TODO
 -------
 
 - [ ] Command to run `nim pretty`
-- [ ] Integration with *Terminus*
 
 
 Contributing

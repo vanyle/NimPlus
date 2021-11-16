@@ -3,6 +3,11 @@
     "sublimenim.savecheck": true,
     "sublimenim.autocomplete": true,
     "sublimenim.hoverdescription":true,
-    "sublimenim.nim.console":["wt"],
-    "sublimenim.nimble.console":["start","powershell","-Command"]
+    "sublimenim.nim.console":[],
+    "sublimenim.nimble.console":[],
+
+    // Set to true if you have terminus install and want to enjoy the integration with it.
+    // The output is not displayed in the output panel anymore in this case.
+    // Terminus allows you to interact the the stdin of your program which is nice when developping command line applications
+    "sublimenim.use_terminus": true
 }

@@ -1,11 +1,11 @@
 [
-	//{
-		//"keys":["ctrl+b"],
-		//"command":"run_nimble"
-	//},
+	{
+		"keys":["ctrl+b"],
+		"command":"run_nim"
+	},
 	{
 		"keys":["ctrl+shift+b"],
-		"command":"compile_nimble"
+		"command":"run_nimble"
 	},
 
 ]

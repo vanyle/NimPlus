@@ -342,7 +342,22 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 
 proc = None
 
+def run_in_terminus(window,commands,cwd):
+	str_com = ""
+	for argument in commands:
+		if " " not in argument:
+			str_com += argument + " "
+		else:
+			str_com += '"' + argument.replace('"','\\"') + '" '
 
+	window.run_command("terminus_open",{
+        "cwd": cwd,
+        "shell_cmd": str_com,
+        "title":"Nim",
+        "auto_close": False
+	})
+
+	return
 
 
 def execute_nim_command_on_file(commands,comobj):
@@ -356,9 +371,15 @@ def execute_nim_command_on_file(commands,comobj):
 	if proc != None and proc.poll() is None: # kill the running process.
 		proc.terminate()
 
-	# "--stdout:on"
 	com = commands
 	com.append(filepath)
+
+	# "--stdout:on"
+	if settings.get("sublimenim.use_terminus"):
+		cwd = os.path.dirname(os.path.abspath(filepath))
+		run_in_terminus(comobj.window,com,cwd)
+		return
+
 	proc,stdout,stderr = start(com,True)
 	comobj.window.destroy_output_panel("compilation")
 	new_view = comobj.window.create_output_panel("compilation",False)
@@ -419,6 +440,10 @@ def execute_nim_command_on_project(commands,comobj,noFilename = False):
 	com = commands
 	if not noFilename:
 		com.append(filepath)
+
+	if settings.get("sublimenim.use_terminus"):
+		run_in_terminus(comobj.window,com,p)
+		return
 
 	proc,stdout,stderr = start(com,True,cwd = str(p))
 	comobj.window.destroy_output_panel("compilation")
