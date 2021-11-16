@@ -19,6 +19,7 @@ Features
 * Autocompletion (based on `nimsuggest`)
 * Shows your documentation
 * Keyshortcuts for building and generation documentation
+* Prettify your code with nimpretty
 
 ![demo](example.png)
 
@@ -38,7 +39,11 @@ If you have other packages installed, you probably also have already installed *
 Settings, Usage and Tips
 ------------------------
 
-You should install the `ANSIescape` package to enjoy the syntax coloring of the terminal when building.
+To see what SublimeNim is capable of, open the *Command Palette* (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> ), and type `SublimeNim`.
+This will list most SublimeNim features.
+
+
+You can install the `ANSIescape` package to enjoy the syntax coloring of the terminal when building.
 This is optional.
 
 Depending on how much you want Sublime to behave as an IDE or as a text editor, you can toggle the following features.
@@ -126,12 +131,6 @@ the config switch
 ```js
 "sublimenim.use_terminus": true
 ```
-
-TODO
--------
-
-- [ ] Command to run `nim pretty`
-
 
 Contributing
 ------------

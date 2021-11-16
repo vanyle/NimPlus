@@ -31,6 +31,10 @@
         "caption": "SublimeNim: (Nimble) Check that the .nimble file is valid",
         "command": "check_nimble"
     },
+    {
+		"caption":"SublimeNim: Prettify current file (with nimpretty)",
+		"command":"prettify_nim"
+    },
 	{
 		"caption":"Preferences: SublimeNim Settings – Default",
 		"command": "open_file",

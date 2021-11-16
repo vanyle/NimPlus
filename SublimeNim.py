@@ -417,7 +417,7 @@ def execute_nim_command_on_project(commands,comobj,noFilename = False):
 		if not os.path.isdir(p):
 			p = os.path.dirname(p)
 			continue
-		files = [x for x in os.listdir(p) if x.endswith(".nimble") and os.path.isfile(x)]
+		files = [x for x in os.listdir(p) if (x.endswith(".nimble") and os.path.isfile(os.path.join(p,x)))]
 		if len(files) <= 0:
 			p = os.path.dirname(p)
 			continue
@@ -492,15 +492,26 @@ class RunNimbleCommand(sublime_plugin.WindowCommand):
 class CompileNimbleCommand(sublime_plugin.WindowCommand):
 	def run(self):	
 		execute_nim_command_on_project(["nimble","build"],self,noFilename = True)
+
 class RefreshNimbleCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		execute_nim_command_on_project(["nimble","refresh"],self,noFilename = True)
+
 class CheckNimbleCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		execute_nim_command_on_project(["nimble","check"],self, noFilename = True)
+
 class DocumentNimCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		execute_nim_command_on_project(["nim","doc","--project","--outdir:htmldocs","--index:on"],self)
+
+class PrettifyNimCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		view = self.window.active_view()
+		filepath = view.file_name()
+		p = subprocess.Popen(["nimpretty",filepath])
+
+
 class OpenDocumentNimCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		view = self.window.active_view()
@@ -513,7 +524,7 @@ class OpenDocumentNimCommand(sublime_plugin.WindowCommand):
 			if not os.path.isdir(p):
 				p = os.path.dirname(p)
 				continue
-			files = [x for x in os.listdir(p) if x.endswith(".nimble") and os.path.isfile(x)]
+			files = [x for x in os.listdir(p) if (x.endswith(".nimble") and os.path.isfile(os.path.join(p,x)))]
 			if len(files) <= 0:
 				p = os.path.dirname(p)
 				continue
