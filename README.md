@@ -18,7 +18,7 @@ Features
 * Goto Definition (link inside tooltip)
 * Autocompletion (based on `nimsuggest`)
 * Shows your documentation
-* Keyshortcuts for building and generation documentation
+* Keyboard shortcuts for building and generating documentation
 * Prettify your code with nimpretty
 
 ![demo](example.png)
@@ -135,5 +135,6 @@ the config switch
 Contributing
 ------------
 
-Pull requests are **not** welcome. Fork this project if you want to add stuff.
+Pull requests are **not** welcome.
+I might still merge them if I feel like it thou.
 Open an issue if you have a problem.
