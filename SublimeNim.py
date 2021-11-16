@@ -5,7 +5,7 @@ import webbrowser
 from threading import Thread
 import sys
 import time
-import pathlib
+from os import path as ospath
 
 
 try:
@@ -390,17 +390,17 @@ def execute_nim_command_on_project(commands,comobj,noFilename = False):
 	if proc != None and proc.poll() is None: # kill the running process.
 		proc.terminate()
 
-	p = pathlib.Path(filepath)
+	p = ospath.abspath(filepath)
 	found = False
 	for i in range(100):
 		if str(p) == str(p.parent):
 			break
-		if not p.is_dir():
+		if not ospath.isdir(p):
 			p = p.parent
 			continue
-		files = [x for x in p.iterdir() if (x.name.endswith(".nimble") and x.is_file())]
+		files = [x for x in ospath.listdir(p) if (x.name.endswith(".nimble") and x.is_file())]
 		if len(files) <= 0:
-			p = p.parent
+			p = ospath.dirname(p)
 			continue
 		else:
 			print(len(files),files)
@@ -482,17 +482,17 @@ class OpenDocumentNimCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		view = self.window.active_view()
 		filepath = view.file_name()
-		p = pathlib.Path(filepath)
+		p = ospath.abspath(filepath)
 		found = False
 		for i in range(100):
-			if str(p) == str(p.parent):
+			if ospath.dirname(p) == p:
 				break
 			if not p.is_dir():
 				p = p.parent
 				continue
-			files = [x for x in p.iterdir() if (x.name.endswith(".nimble") and x.is_file())]
+			files = [x for x in ospath.listdir(p) if (x.name.endswith(".nimble") and x.is_file())]
 			if len(files) <= 0:
-				p = p.parent
+				p = ospath.dirname(p)
 				continue
 			else:
 				print(len(files),files)
@@ -503,9 +503,9 @@ class OpenDocumentNimCommand(sublime_plugin.WindowCommand):
 		if not found:
 			sublime.message_dialog("Documentation not found.")
 
-		p = p / "htmldocs/theindex.html"
-		print(p.as_uri())
-		webbrowser.open_new_tab(p.as_uri())
+		p = ospath.join(p,"htmldocs/theindex.html")
+		print("file:///" + p)
+		webbrowser.open_new_tab("file:///" + p)
 
 
 class SublimeNimOpenSiteCommand(sublime_plugin.WindowCommand):
