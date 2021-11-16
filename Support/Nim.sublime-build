@@ -1,0 +1,12 @@
+{
+    "cmd": ["nim", "r", "$file"],
+    "selector": "source.nim",
+    "file_regex": "^(.+.nim)\\((\\d+), (\\d+)\\) (.*)",
+    "variants": [
+        {
+            "cmd": ["nim", "c", "-r", "$file"],
+            "selector": "source.nim",
+            "name": "Do not run"
+        }
+    ]
+}
