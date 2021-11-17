@@ -49,7 +49,8 @@ This is optional.
 Depending on how much you want Sublime to behave as an IDE or as a text editor, you can toggle the following features.
 You can see all the toggles inside your preference file.
 
-Open it with: Preferences > Package Settings > SublimeNim > Settings - Default
+Open it with: 
+<kbd>Preferences</kbd> > <kbd>Package Settings</kbd> > <kbd>SublimeNim</kbd> > <kbd>Settings - Default</kbd>
 
 ### Error highlighting
 
@@ -74,6 +75,7 @@ You need to enable `autocompletion` in *Sublime Text* settings
 ### Build shortcuts
 
 <kbd>Ctrl</kbd>+<kbd>B</kbd> : Compile and Run the current nimble project
+
 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> : Compile the current nimble project   
 
 You can change these with:  
