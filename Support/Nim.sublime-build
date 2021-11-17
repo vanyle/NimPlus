@@ -7,6 +7,11 @@
             "cmd": ["nim", "c", "-r", "$file"],
             "selector": "source.nim",
             "name": "Do not run"
+        },
+        {
+            "cmd": ["nim", "c", "-d:release", "$file"],
+            "selector": "source.nim",
+            "name": "Release mode"
         }
     ]
 }

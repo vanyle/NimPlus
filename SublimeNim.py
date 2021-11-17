@@ -380,6 +380,8 @@ def execute_nim_command_on_file(commands,comobj):
 		run_in_terminus(comobj.window,com,cwd)
 		return
 
+	print(com)
+
 	proc,stdout,stderr = start(com,True)
 	comobj.window.destroy_output_panel("compilation")
 	new_view = comobj.window.create_output_panel("compilation",False)
@@ -473,6 +475,7 @@ class CompileNimCommand(sublime_plugin.WindowCommand):
 class RunNimCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		args = settings.get("sublimenim.nim.console")
+		args.reverse()
 		com = ["nim","r","--colors"]
 		if type(args) == list:
 			for i in args:
@@ -482,11 +485,11 @@ class RunNimCommand(sublime_plugin.WindowCommand):
 class RunNimbleCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		args = settings.get("sublimenim.nimble.console")
+		args.reverse()
 		com = ["nimble","run"]
 		if type(args) == list:
 			for i in range(len(args)):
 				com.insert(i,args[i])
-		print(com)
 		execute_nim_command_on_project(com,self,noFilename = True)
 
 class CompileNimbleCommand(sublime_plugin.WindowCommand):
@@ -529,7 +532,6 @@ class OpenDocumentNimCommand(sublime_plugin.WindowCommand):
 				p = os.path.dirname(p)
 				continue
 			else:
-				print(len(files),files)
 				found = True
 				break
 
