@@ -1,11 +1,25 @@
 [
 	{
 		"keys":["ctrl+b"],
-		"command":"run_nim"
+		"command":"run_nim",
+		"context":[
+			{
+				"key":"selector",
+				"operator":"equal",
+				"operand":"source.nim"
+			}
+		]
 	},
 	{
 		"keys":["ctrl+shift+b"],
-		"command":"run_nimble"
+		"command":"run_nimble",
+		"context":[
+			{
+				"key":"selector",
+				"operator":"equal",
+				"operand":"source.nim"
+			}
+		]
 	},
 
 ]
