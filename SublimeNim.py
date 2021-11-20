@@ -1,21 +1,24 @@
 import sublime_plugin
 import sublime
 import subprocess
+import sys, os, time, traceback, re
+
 import webbrowser
 from threading import Thread
-import sys,os,time
+from queue import Queue, Empty
 
-
-try:
-	from queue import Queue, Empty
-except ImportError:
-	from Queue import Queue, Empty  # python 2.x
-ON_POSIX = 'posix' in sys.builtin_module_names
+def cpublish_string(s):
+	# A custom RST parser for poor people.
+	# I won't use docutils.
+	s = s.replace("\n","<br/>")
+	s = s.replace("\\'","'")
+	s = s.replace("\\\"","\"")
+	return s
 
 def enqueue_output(out, queue):
 	for line in iter(out.readline, b''):
 		queue.put(line)
-		# print(queue.qsize(),line)
+		# print("SublimeNim:",queue.qsize(),line)
 	out.close()
 
 
@@ -23,7 +26,7 @@ package_name = 'SublimeNim'
 
 # Used for executable management
 def start(args,outputManager = False,cwd = None):
-	# print("Running: "," ".join(args))
+	# print("SublimeNim:","Running: "," ".join(args))
 	p = subprocess.Popen(
 		args,
 		cwd=cwd,
@@ -102,7 +105,7 @@ def fetch_suggestions(filepath,line,col):
 		while not suggest_out.empty(): # flush read.
 			tmp = suggest_out.get(block=False,timeout=1)
 			data = tmp.decode("utf-8").split("\t")
-			# print(len(data),data)
+			# print("SublimeNim:",len(data),data)
 			if len(data) == 10:
 				suggestions.append(data)
 			if len(suggestions) > 1000:
@@ -112,7 +115,7 @@ def fetch_suggestions(filepath,line,col):
 		return suggestions
 		
 	except Exception as err:
-		print("Unexpected error:", sys.exc_info()[0])
+		print("SublimeNim:","Unexpected error:", sys.exc_info()[0])
 		return []
 
 # Hook to Package Manager events !
@@ -122,10 +125,10 @@ def plugin_loaded():
 	from package_control import events
 	settings = sublime.load_settings('sublime_nim.sublime-settings')
 
-	if events.install(package_name):
-		print('Installed %s!' % events.install(package_name))
-	elif events.post_upgrade(package_name):
-		print('Upgraded to %s!' % events.post_upgrade(package_name))
+	#if events.install(package_name):
+		# print("SublimeNim:",'Installed %s!' % events.install(package_name))
+	# elif events.post_upgrade(package_name):
+		# print("SublimeNim",'Upgraded to %s!' % events.post_upgrade(package_name))
 
 def plugin_unloaded():
 	from package_control import events
@@ -138,10 +141,6 @@ def plugin_unloaded():
 		except:
 			pass
 		suggest_process = None
-	if events.pre_upgrade(package_name):
-		print('Upgrading from %s!' % events.pre_upgrade(package_name))
-	elif events.remove(package_name):
-		print('Removing %s!' % events.remove(package_name))
 
 
 if int(sublime.version()) < 3000:
@@ -200,7 +199,6 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 				def on_navigate():
 					pass
 
-				# print(msg_type)
 				rcolor = "#f00" if msg_type.strip() == "Error" else "#00f"
 				regcolor = "region.redish" if msg_type.strip() == "Error" else "region.cyanish"
 
@@ -257,6 +255,10 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 			# data[7] = Doc string
 			if len(data) == 9:
 				docstr = data[7].replace("\\x0A","\n")[1:-1]
+				docstr = escape(docstr)
+				docstr = cpublish_string(docstr)
+				# Convert RST to HTML.
+
 				body = """
 					<style>
 						h4{ margin:0;padding:0; }
@@ -271,7 +273,7 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 				""" % (escape(data[3]),
 						data[4],data[5],data[6],
 						data[4],data[5],data[6],
-					escape(docstr)) # docstr are markdown formatted.
+						docstr) # docstr are rst formatted.
 
 				def on_navigate(href):
 					file,line,col = href.split(",")
@@ -293,7 +295,6 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 					t.start()
 				def on_hide():
 					pass
-
 				view.show_popup(
 					body,
 					sublime.HIDE_ON_MOUSE_MOVE_AWAY,
@@ -304,7 +305,8 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 					on_hide
 				)
 		except Exception as err:
-			print("Unexpected error:", sys.exc_info()[0])
+			print("SublimeNim:","Unexpected error:")
+			traceback.print_exc()
 			pass
 	def on_query_completions(self, view, prefix, locations):
 		global settings
@@ -321,7 +323,6 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 		# Fetch the suggestions async.
 		def fillCompletions(lst,prefix):
 			suggestions = fetch_suggestions(filepath,line,col)
-			# print([i[2] for i in suggestions])
 			completions = []
 			for i in suggestions:
 				docstr = i[7].replace("\\x0A","\n")[1:-1]
@@ -380,8 +381,6 @@ def execute_nim_command_on_file(commands,comobj):
 		run_in_terminus(comobj.window,com,cwd)
 		return
 
-	print(com)
-
 	proc,stdout,stderr = start(com,True)
 	comobj.window.destroy_output_panel("compilation")
 	new_view = comobj.window.create_output_panel("compilation",False)
@@ -424,7 +423,6 @@ def execute_nim_command_on_project(commands,comobj,noFilename = False):
 			p = os.path.dirname(p)
 			continue
 		else:
-			print(len(files),files)
 			found = True
 			break
 
@@ -540,7 +538,6 @@ class OpenDocumentNimCommand(sublime_plugin.WindowCommand):
 			sublime.message_dialog("Documentation not found.")
 
 		p = os.path.join(p,"htmldocs/theindex.html")
-		print("file:///" + p)
 		webbrowser.open_new_tab("file:///" + p)
 
 
