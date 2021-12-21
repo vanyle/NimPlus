@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>scope</key>
+	<string>source.nim</string>
+	<key>settings</key>
+	<dict>
+		<key>decreaseIndentPattern</key>
+		<!-- Same as python but with "of" keyword for switchs -->
+		<string>^\s*(elif|else|except|finally|of)\b.*:</string>
+		<!--
+		Match:
+			spaces + [ if/for/... + anything + : ] or [proc/func/... + =]
+		-->
+		<!--
+		Python for ref:
+		<string>^\s*(class|(\basync\s+)?(def|for|with)|elif|else|except|finally|if|try|while)\b.*:\s*$</string>
+		-->
+
+		<key>increaseIndentPattern</key>
+		<string>^\s*(((for|if|while|try|elif|else|except|case|finally|of)\b.*:)|((proc|template|macro|func)\b.*=))\s*$</string>
+
+		<key>disableIndentNextLinePattern</key>
+		<string></string>
+
+		<key>shellVariables</key>
+		<array>
+			<!--
+				We only specify this comment type so that ctrl+/ has a nice behavior
+				Inserting #[ ]# is not useful.
+			-->
+			<dict>
+				<key>name</key>
+				<string>TM_COMMENT_START</string>
+				<key>value</key>
+				<string>#</string>
+			</dict>
+		</array>
+	</dict>
+</dict>
+</plist>
