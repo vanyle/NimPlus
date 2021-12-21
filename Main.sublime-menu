@@ -60,30 +60,23 @@
                         "children":
                         [
                             {
-                                "command": "open_file",
-                                "args": {"file": "${packages}/SublimeNim/sublime_nim.sublime-settings"},
-                                "caption": "Settings – Default"
+                                "caption":"Settings",
+                                "command": "edit_settings",
+                                "args":{
+                                    "base_file": "${packages}/SublimeNim/sublime_nim.sublime-settings",
+                                    "default": "{\n\t$0\n}\n"
+                                }
                             },
                             {
-                                "command": "open_file",
-                                "args": {"file": "${packages}/User/sublime_nim.sublime-settings"},
-                                "caption": "Settings – User"
-                            },
-                            { "caption": "-" },
-                            {
-                                "command": "open_file",
+                                "caption": "Key Bindings",
+                                "command": "edit_settings",
                                 "args": {
-                                    "file": "${packages}/SublimeNim/Default.sublime-keymap"
+                                    "base_file": "${packages}/SublimeNim/Default.sublime-keymap",
+                                    "user_file": "${packages}/User/Default.sublime-keymap",
+                                    "default": "[\n\t$0\n]\n"
                                 },
-                                "caption": "Key Bindings – Default"
                             },
-                            {
-                                "command": "open_file",
-                                "args": {
-                                    "file": "${packages}/User/Default.sublime-keymap"
-                                },
-                                "caption": "Key Bindings – User"
-                            },
+                            
                             { "caption": "-" },
                             {
                                 "caption": "Github",

@@ -16,47 +16,43 @@
 		"command":"run_nimble"
 	},
 	{
-        "caption": "SublimeNim: Generate documentation",
-        "command": "document_nim"
-    },
-    {
-    	"caption":"SublimeNim: Open the documentation in the browser",
-    	"command":"open_document_nim"
-    },
-    {
-        "caption": "SublimeNim: (Nimble) Refresh package list",
-        "command": "refresh_nimble"
-    },
-    {
-        "caption": "SublimeNim: (Nimble) Check that the .nimble file is valid",
-        "command": "check_nimble"
-    },
-    {
+		"caption": "SublimeNim: Generate documentation",
+		"command": "document_nim"
+	},
+	{
+		"caption":"SublimeNim: Open the documentation in the browser",
+		"command":"open_document_nim"
+	},
+	{
+		"caption": "SublimeNim: (Nimble) Refresh package list",
+		"command": "refresh_nimble"
+	},
+	{
+		"caption": "SublimeNim: (Nimble) Check that the .nimble file is valid",
+		"command": "check_nimble"
+	},
+	{
 		"caption":"SublimeNim: Prettify current file (with nimpretty)",
 		"command":"prettify_nim"
-    },
+	},
+
+	// Classic plugin things
+
 	{
-		"caption":"Preferences: SublimeNim Settings – Default",
-		"command": "open_file",
-		"args": {"file": "${packages}/SublimeNim/sublime_nim.sublime-settings"},
+		"caption":"Preferences: SublimeNim Settings",
+		"command": "edit_settings",
+		"args":{
+			"base_file": "${packages}/SublimeNim/sublime_nim.sublime-settings",
+			"default": "{\n\t$0\n}\n"
+		}
 	},
 	{
-		"caption":"Preferences: SublimeNim Settings – User",
-		"command": "open_file",
-		"args": {"file": "${packages}/User/sublime_nim.sublime-settings"},
-	},
-	{
-        "caption": "Preferences: SublimeNim Key Bindings – Default",
-        "command": "open_file",
-        "args": {
-            "file": "${packages}/SublimeNim/Default.sublime-keymap"
-        },
-    },
-    {
-        "caption": "Preferences: SublimeNim Key Bindings – User",
-        "command": "open_file",
-        "args": {
-            "file": "${packages}/User/Default.sublime-keymap"
-        },
-    },
+		"caption": "Preferences: SublimeNim Key Bindings",
+		"command": "edit_settings",
+		"args": {
+			"base_file": "${packages}/SublimeNim/Default.sublime-keymap",
+			"user_file": "${packages}/User/Default.sublime-keymap",
+			"default": "[\n\t$0\n]\n"
+		},
+	}
 ]
