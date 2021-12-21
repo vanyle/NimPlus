@@ -3,13 +3,16 @@
     "sublimenim.savecheck": true,
     "sublimenim.autocomplete": true,
     "sublimenim.hoverdescription":true,
-    "sublimenim.nim.console":[],
-    "sublimenim.nimble.console":[],
+    "sublimenim.nim.console": [],
+    "sublimenim.nimble.console": [],
 
     // Arguments passed to the nim compiler when building / checking the file
     // The path to the current file is appended at the end.
     // You can add here --d:release and --d:danger when needed
     "sublimenim.nim.arguments":["--threads:on","-d:ssl","--stdout:on"],
+
+    "sublimenim.nim.save_before_build":true,
+    "sublimenim.nimble.save_before_build":true,
 
     // Set to true if you have terminus install and want to enjoy the integration with it.
     // The output is not displayed in the output panel anymore in this case.

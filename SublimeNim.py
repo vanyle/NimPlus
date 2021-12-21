@@ -370,6 +370,9 @@ def execute_nim_command_on_file(commands,comobj):
 	global proc
 	view = comobj.window.active_view()
 
+	if settings.get("sublimenim.nim.save_before_build"):
+		view.run_command("save")
+
 	point = view.sel()[0].begin()
 	filepath = view.file_name()
 	if type(filepath) != str or not view.match_selector(point, "source.nim"):
@@ -406,8 +409,11 @@ def execute_nim_command_on_file(commands,comobj):
 def execute_nim_command_on_project(commands,comobj,noFilename = False):
 	# commands is an array like ["nim","doc"] for example.
 	global proc
-
 	view = comobj.window.active_view()
+
+	if settings.get("sublimenim.nim.save_before_build"):
+		view.run_command("save")
+
 	point = view.sel()[0].begin()
 	filepath = view.file_name()
 	if type(filepath) != str or not view.match_selector(point, "source.nim"):
