@@ -21,5 +21,22 @@
 			}
 		]
 	},
+	
+	{
+		"keys": ["ctrl+alt+p"],
+		"command":"prettify_nim",
+		"context":[
+			{
+				"key":"selector",
+				"operator":"equal",
+				"operand":"source.nim"
+			}
+		]
+	}
+
+	// Some other commands you might want to assign to a key.
+	/*
+
+	*/
 
 ]

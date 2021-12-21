@@ -1,11 +1,11 @@
 import sublime_plugin
 import sublime
 import subprocess
-import sys, os, time, traceback, re
+import sys, os, time, traceback
 
 import webbrowser
 from threading import Thread
-from queue import Queue, Empty
+from queue import Queue
 
 def cpublish_string(s):
 	# A custom RST parser for poor people.
@@ -161,7 +161,12 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 		# run check process
 		view.window().status_message("Checking program validity ...")
 
-		check_process = start(["nim.exe","check","--stdout:on","--verbosity:0",filepath])[0]
+		nim_args = settings.get("sublimenim.nim.arguments")
+
+		nim_checking_command = ["nim.exe","check"] + nim_args
+		nim_checking_command.append(filepath)
+
+		check_process = start(nim_checking_command)[0]
 		stdout,stderr = None,None
 		try:
 			stdout,stderr = check_process.communicate(timeout=8)
@@ -469,12 +474,19 @@ def execute_nim_command_on_project(commands,comobj,noFilename = False):
 
 class CompileNimCommand(sublime_plugin.WindowCommand):
 	def run(self):
-		execute_nim_command_on_file(["nim","c","--colors"],self)
+		com = ["nim","c"]
+		nim_args = settings.get("sublimenim.nim.arguments")
+		execute_nim_command_on_file(com + nim_args,self)
+
 class RunNimCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		args = settings.get("sublimenim.nim.console")
 		args.reverse()
-		com = ["nim","r","--colors"]
+		
+		nim_args = settings.get("sublimenim.nim.arguments")
+		com = ["nim","r"]
+		com += nim_args
+
 		if type(args) == list:
 			for i in args:
 				com.insert(0,i)
@@ -491,7 +503,7 @@ class RunNimbleCommand(sublime_plugin.WindowCommand):
 		execute_nim_command_on_project(com,self,noFilename = True)
 
 class CompileNimbleCommand(sublime_plugin.WindowCommand):
-	def run(self):	
+	def run(self):
 		execute_nim_command_on_project(["nimble","build"],self,noFilename = True)
 
 class RefreshNimbleCommand(sublime_plugin.WindowCommand):
