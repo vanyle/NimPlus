@@ -10,7 +10,7 @@
 		<string>^\s*(elif|else|except|finally|of)\b.*:</string>
 		<!--
 		Match:
-			spaces + [ if/for/... + anything + : ] or [proc/func/... + =]
+			spaces + [ if/for/... + anything + : ] or [proc/func/... + =] or [type/var/...]
 		-->
 		<!--
 		Python for ref:
@@ -18,7 +18,7 @@
 		-->
 
 		<key>increaseIndentPattern</key>
-		<string>^\s*(((for|if|while|try|elif|else|except|case|finally|of)\b.*:)|((proc|template|macro|func)\b.*=))\s*$</string>
+		<string>^\s*(((for|if|while|try|elif|else|except|case|finally|of)\b.*:)|((proc|template|macro|func)\b.*=)|((var|type|let|const)\b)|(.*\b(object|enum|tuple)\b))\s*$</string>
 
 		<key>disableIndentNextLinePattern</key>
 		<string></string>
