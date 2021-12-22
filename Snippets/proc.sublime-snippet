@@ -1,0 +1,9 @@
+<snippet>
+	<content><![CDATA[
+proc ${1:name}(${2:a}: ${3:int}): ${4:int} =
+    ${0:return a}
+]]></content>
+	<tabTrigger>proc</tabTrigger>
+	<scope>source.nim</scope>
+	<description>Procedure</description>
+</snippet>

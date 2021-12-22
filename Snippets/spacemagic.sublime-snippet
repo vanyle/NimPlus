@@ -1,0 +1,8 @@
+<snippet>
+	<content><![CDATA[
+#? replace(sub = "\t", by = "  ")
+]]></content>
+	<tabTrigger>tabtospace</tabTrigger>
+	<scope>source.nim</scope>
+	<description>For tab loving people</description>
+</snippet>

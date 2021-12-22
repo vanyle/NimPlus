@@ -20,9 +20,6 @@
 		<key>increaseIndentPattern</key>
 		<string>^\s*(((for|if|while|try|elif|else|except|case|finally|of)\b.*:)|((proc|template|macro|func)\b.*=)|((var|type|let|const)\b)|(.*\b(object|enum|tuple)\b))\s*$</string>
 
-		<key>disableIndentNextLinePattern</key>
-		<string></string>
-
 		<key>shellVariables</key>
 		<array>
 			<!--

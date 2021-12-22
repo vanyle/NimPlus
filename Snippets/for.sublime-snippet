@@ -1,0 +1,9 @@
+<snippet>
+	<content><![CDATA[
+for ${1:i} in ${2:arr}:
+    ${0:echo i}
+]]></content>
+	<tabTrigger>for</tabTrigger>
+	<scope>source.nim - meta.function.parameters - meta.function-call - meta.statement - meta.mapping - meta.sequence - meta.set - comment - string</scope>
+	<description>For Loop</description>
+</snippet>
