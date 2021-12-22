@@ -479,19 +479,28 @@ def execute_nim_command_on_project(commands,comobj,noFilename = False):
 	t.start()
 
 class CompileNimCommand(sublime_plugin.WindowCommand):
-	def run(self):
+	def run(self, **kwargs):
 		com = ["nim","c"]
 		nim_args = settings.get("sublimenim.nim.arguments")
-		execute_nim_command_on_file(com + nim_args,self)
+		more_args = []
+		if "arguments" in kwargs:
+			more_args = kwargs["arguments"]
+
+		execute_nim_command_on_file(com + nim_args + more_args,self)
 
 class RunNimCommand(sublime_plugin.WindowCommand):
-	def run(self):
+	def run(self, **kwargs):
 		args = settings.get("sublimenim.nim.console")
 		args.reverse()
 		
 		nim_args = settings.get("sublimenim.nim.arguments")
+		more_args = []
+		if "arguments" in kwargs:
+			more_args = kwargs["arguments"]
+
 		com = ["nim","r"]
 		com += nim_args
+		com += more_args
 
 		if type(args) == list:
 			for i in args:
@@ -499,18 +508,30 @@ class RunNimCommand(sublime_plugin.WindowCommand):
 		execute_nim_command_on_file(com,self)
 
 class RunNimbleCommand(sublime_plugin.WindowCommand):
-	def run(self):
+	def run(self, **kwargs):
 		args = settings.get("sublimenim.nimble.console")
 		args.reverse()
 		com = ["nimble","run"]
+
+		more_args = []
+		if "arguments" in kwargs:
+			more_args = kwargs["arguments"]
+		com += more_args
+
 		if type(args) == list:
 			for i in range(len(args)):
 				com.insert(i,args[i])
 		execute_nim_command_on_project(com,self,noFilename = True)
 
 class CompileNimbleCommand(sublime_plugin.WindowCommand):
-	def run(self):
-		execute_nim_command_on_project(["nimble","build"],self,noFilename = True)
+	def run(self, **kwargs):
+		com = ["nimble","build"]
+		more_args = []
+		if "arguments" in kwargs:
+			more_args = kwargs["arguments"]
+		com += more_args
+
+		execute_nim_command_on_project(com,self,noFilename = True)
 
 class RefreshNimbleCommand(sublime_plugin.WindowCommand):
 	def run(self):

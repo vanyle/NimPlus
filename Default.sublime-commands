@@ -4,6 +4,13 @@
 		"command": "compile_nim"
 	},
 	{
+		"caption": "SublimeNim: Compile the current Nim file in release mode",
+		"command": "compile_nim",
+		"args":{
+			"arguments":["-d:release"]
+		}
+	},
+	{
 		"caption":"SublimeNim: Compile and Run the current Nim file",
 		"command":"run_nim"
 	},

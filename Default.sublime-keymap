@@ -32,11 +32,44 @@
 				"operand":"source.nim"
 			}
 		]
-	}
+	},
+
 
 	// Some other commands you might want to assign to a key.
+	
+	// Run in release mode
 	/*
-
+	{
+		"keys":["ctrl+alt+b"],
+		"command":"run_nim",
+		"args":{
+			"arguments":["-d:release","-d:danger"]
+		},
+		"context":[{"key":"selector","operator":"equal","operand":"source.nim"}]
+	},
 	*/
+	// Run in release mode for nimble
+	/*
+	{
+		"keys":["ctrl+alt+b"],
+		"command":"compile_nimble",
+		"args":{
+			"arguments":["-d:release","-d:danger"]
+		},
+		"context":[{"key":"selector","operator":"equal","operand":"source.nim"}]
+	},
+	*/
+
+
+	// Quickly open documentation
+	/*
+	{
+		"keys":["ctrl+alt+o"]
+		"command":"open_document_nim",
+		"context":[{"key":"selector","operator":"equal","operand":"source.nim"}]
+	},
+	*/
+
+	
 
 ]
