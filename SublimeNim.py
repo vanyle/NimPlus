@@ -7,6 +7,9 @@ import webbrowser
 from threading import Thread
 from queue import Queue
 
+# from nimsuggest import Nimsuggest
+# from docdisplay import cpublish_string
+
 def cpublish_string(s):
 	# A custom RST parser for poor people.
 	# I won't use docutils.
@@ -20,7 +23,6 @@ def enqueue_output(out, queue):
 		queue.put(line)
 		# print("SublimeNim:",queue.qsize(),line)
 	out.close()
-
 
 package_name = 'SublimeNim'
 
@@ -315,30 +317,63 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 			pass
 	def on_query_completions(self, view, prefix, locations):
 		global settings
+		
 		if not settings.get("sublimenim.autocomplete"):
 			return
+		# don't offer anything for multiple cursors
+		if len(locations) > 1:
+			return ([], 0)
+
 		filepath = view.file_name()
 		if type(filepath) != str or not view.match_selector(locations[0], "source.nim"):
 			return
+
 		global suggest_process,suggest_out
 		
 		line,col = view.rowcol(locations[0])
+
+		# Needed for async completion instead of regular []
 		lst = sublime.CompletionList()
 
 		# Fetch the suggestions async.
-		def fillCompletions(lst,prefix):
+		def fillCompletions(lst, prefix):
+			# We need to save the file for nimsuggest to work properly here.
+			# view.run_command("save")
 			suggestions = fetch_suggestions(filepath,line,col)
 			completions = []
+			
+			print("pref: ",prefix)
+
 			for i in suggestions:
+				# i[1] = skMacro, skProc, skType, skIterator, skTemplate, skFunc
+				#        skEnumField, skConst, skVar, skLet
+				kind = sublime.KIND_AMBIGUOUS
+				if i[1] in ["skMacro","skProc","skIterator","skTemplate","skFunc"]:
+					kind = sublime.KIND_FUNCTION
+				elif i[1] in ["skConst","skLet","skVar","skEnumField","skField"]:
+					kind = sublime.KIND_VARIABLE
+				elif i[1] in ["skType"]:
+					kind = sublime.KIND_TYPE
+				toComplete = i[2].split(".")
+				toComplete = toComplete[-1] # Remove the package prefix.
+
 				docstr = i[7].replace("\\x0A","\n")[1:-1]
+				# source = """http:open_recent_file""" #  {"file": "%s"} % i[4] # + "," + i[5] + "," + i[6]
+				# sourcelink = "<a href='%s'>Source</a> " % source
+				if len(docstr) >= 90:
+					docstr = docstr[:90] # maxlen: 60 chars to avoid having a big completion window.
+
+				details = "<div>%s</div>" % escape(docstr)
+
 				item = sublime.CompletionItem(
-					i[2], # trigger is empty.
-					i[3], # annotation (displayed on the right)
-					i[2], # completion (will be inserted)
-					details="<div>%s</div>" % escape(docstr)
+					trigger = toComplete, # trigger is empty.
+					annotation = i[3], # annotation (displayed on the right). We display the type.
+					completion = toComplete, # completion (will be inserted)
+					details = details, # displayed at the bottom, we display the documentation of the item
+					kind = kind # icon on the left.
 				)
 				completions.append(item)
-			lst.set_completions(completions)
+			lst.set_completions(completions, sublime.INHIBIT_WORD_COMPLETIONS)
 
 		t = Thread(target=fillCompletions, args=(lst,prefix,))
 		t.daemon = True
