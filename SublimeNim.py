@@ -166,8 +166,10 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 					annotation_color=rcolor,
 					on_navigate=on_navigate,
 					on_close=on_close) # left border
-				
-			terminate(check_process)
+			try:
+				terminate(check_process)
+			except: # ProcessLookupError mostly.
+				pass
 		view.window().status_message("Check completed.")
 
 	def on_hover(self, view: sublime.View, point, hover_zone):
