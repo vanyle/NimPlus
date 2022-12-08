@@ -59,11 +59,7 @@ def escape(html):
 
 def plugin_loaded():
 	global settings
-
-	#if events.install(package_name):
-		# print("SublimeNim:",'Installed %s!' % events.install(package_name))
-	# elif events.post_upgrade(package_name):
-		# print("SublimeNim",'Upgraded to %s!' % events.post_upgrade(package_name))
+	settings = sublime.load_settings('sublime_nim.sublime-settings')
 
 def plugin_unloaded():
 	global suggestionEngine

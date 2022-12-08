@@ -26,4 +26,12 @@ def cpublish_string(s):
 				r.append("<code>")
 			inCode = not inCode
 
+	# TODO: handle this
+	"""
+	.. code-block:: nim
+		# some code written in nim
+		# some more
+	End of the indented block !
+	"""
+
 	return ''.join(r)
