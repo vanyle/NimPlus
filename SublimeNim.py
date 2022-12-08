@@ -91,6 +91,13 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 		filepath = view.file_name()
 		if type(filepath) != str or not view.match_selector(0, "source.nim"):
 			return
+		if filepath.endswith(".nimble"):
+			# No check. We could inject nimble_injection into it to have
+			# proper error checking but .nimble files usually contain very simple
+			# code that is not very error prone, so I don't feel like this feature
+			# is worth it.
+			return
+
 		# run check process
 		view.window().status_message("Checking program validity ...")
 
