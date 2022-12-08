@@ -13,7 +13,6 @@ from SublimeNim.docdisplay import cpublish_string
 isWindows = sys.platform == "win32"
 settings = sublime.load_settings('sublime_nim.sublime-settings')
 suggestionEngine = None # Can be a nimsuggest instance if needed.
-temporaryDisableSaveCheck = False
 
 def enqueue_output(out, queue):
 	for line in iter(out.readline, b''):
@@ -24,6 +23,9 @@ def enqueue_output(out, queue):
 # Used for executable management
 def start(args,outputManager = False,cwd = None):
 	# print("SublimeNim:","Running: "," ".join(args))
+	if not isWindows:
+		args = [" ".join(args)]
+
 	p = subprocess.Popen(
 		args,
 		cwd=cwd,
@@ -81,10 +83,8 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 		if not settings.get("sublimenim.savecheck"):
 			return
 
-		if temporaryDisableSaveCheck:
-			return
-
 		filepath = view.file_name()
+		print(filepath)
 		if type(filepath) != str or not view.match_selector(0, "source.nim"):
 			return
 		if filepath.endswith(".nimble"):
@@ -100,7 +100,7 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 		nim_args = settings.get("sublimenim.nim.arguments")
 
 		nim_checking_command = ["nim","check"] + nim_args
-		nim_checking_command.append(filepath)
+		nim_checking_command.append("\""+ filepath +"\"")
 
 		check_process = start(nim_checking_command)[0]
 		stdout,stderr = None,None
@@ -286,7 +286,7 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 
 
 	def on_query_completions(self, view, prefix, locations):
-		global settings, suggestionEngine, temporaryDisableSaveCheck
+		global settings, suggestionEngine
 		
 		if not settings.get("sublimenim.autocomplete"):
 			return
@@ -311,7 +311,6 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 			# We need to save the file for nimsuggest to work properly here.
 			# view.run_command("save")
 			completions = []
-			print("completions: ",suggestions)
 			
 			for i in suggestions:
 				# i[1] = skMacro, skProc, skType, skIterator, skTemplate, skFunc
@@ -343,10 +342,8 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 				)
 				completions.append(item)
 			
-			print("lst.set_completions")
 			lst.set_completions(completions, sublime.INHIBIT_WORD_COMPLETIONS)
 
-		print("Requesting completions")
 		suggestionEngine.requestSuggestion(filepath, line, col, fillCompletions)
 		
 		return lst

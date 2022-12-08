@@ -9,6 +9,9 @@ import os
 isWindows = sys.platform == "win32"
 settings = sublime.load_settings('sublime_nim.sublime-settings')
 
+if not isWindows:
+	import select
+
 nimsuggest_options = [
 	"--stdin",
 	"--debug",
@@ -20,9 +23,22 @@ if settings.get("sublimenim.nimsuggest.options"):
 	nimsuggest_options = settings.get("sublimenim.nimsuggest.options")
 
 def output_to_queue(output_stream, queue):
-	for line in iter(output_stream.readline, b''):
-		queue.put(line)
-	output_stream.close()
+	if not isWindows:
+		poll_obj = select.poll()
+		poll_obj.register(output_stream, select.EPOLLIN)
+		# Wait a bit for the object to be available for polling.
+		while not output_stream.closed:
+			if poll_obj.poll(1):
+				if output_stream.closed: break
+				line = output_stream.readline()
+				if line == b'': break # means eof.
+				queue.put(line)
+		output_stream.close()
+	else:
+		for line in iter(output_stream.readline, b''):
+			queue.put(line)
+
+		output_stream.close()
 
 def parent_directory(d):
 	return os.path.abspath(os.path.join(d, os.pardir))
@@ -49,8 +65,12 @@ class Nimsuggest:
 	def setup(self, filePath): 
 		self.projectPath = parent_directory(filePath)
 		self.filePath = filePath
-		args = ["nimsuggest"] + nimsuggest_options + [filePath]
+		args = ["nimsuggest"] + nimsuggest_options + ["\""+ filePath +"\""]
+
 		# Use shell=True to not have a terminal window poping up.
+		if not isWindows:
+			args = [" ".join(args)]
+
 		self.process = subprocess.Popen(
 			args,
 			cwd=self.projectPath,
