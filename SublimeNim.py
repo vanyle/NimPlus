@@ -100,7 +100,10 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 		nim_args = settings.get("sublimenim.nim.arguments")
 
 		nim_checking_command = ["nim","check"] + nim_args
-		nim_checking_command.append("\""+ filepath +"\"")
+		if not isWindows:
+			nim_checking_command.append("\""+ filepath +"\"")
+		else:
+			nim_checking_command.append(filepath)
 
 		check_process = start(nim_checking_command)[0]
 		stdout,stderr = None,None

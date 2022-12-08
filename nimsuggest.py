@@ -37,7 +37,6 @@ def output_to_queue(output_stream, queue):
 	else:
 		for line in iter(output_stream.readline, b''):
 			queue.put(line)
-
 		output_stream.close()
 
 def parent_directory(d):
@@ -65,7 +64,13 @@ class Nimsuggest:
 	def setup(self, filePath): 
 		self.projectPath = parent_directory(filePath)
 		self.filePath = filePath
-		args = ["nimsuggest"] + nimsuggest_options + ["\""+ filePath +"\""]
+		
+		args = ["nimsuggest"] + nimsuggest_options
+		if not isWindows:
+			args.append("\""+ filePath +"\"")
+		else:
+			args.append(filePath)
+
 
 		# Use shell=True to not have a terminal window poping up.
 		if not isWindows:
