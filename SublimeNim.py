@@ -388,16 +388,19 @@ def execute_nim_command_on_file(commands,comobj):
 		proc.terminate()
 
 	com = commands
+
+	# "--stdout:on"
+	if settings.get("sublimenim.use_terminus"):
+		com.append(filepath)
+		cwd = os.path.dirname(os.path.abspath(filepath))
+		run_in_terminus(comobj.window,com,cwd)
+		return
+
+	# This is not needed for terminus to work.
 	if not isWindows:
 		com.append("\""+ filepath +"\"")
 	else:
 		com.append(filepath)
-
-	# "--stdout:on"
-	if settings.get("sublimenim.use_terminus"):
-		cwd = os.path.dirname(os.path.abspath(filepath))
-		run_in_terminus(comobj.window,com,cwd)
-		return
 
 	proc,stdout,stderr = start(com,True)
 	comobj.window.destroy_output_panel("compilation")
