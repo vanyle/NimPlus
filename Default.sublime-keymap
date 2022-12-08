@@ -1,4 +1,8 @@
 [
+	/*
+	// Some useful keybindings.
+	// Consider uncommenting these.
+
 	{
 		"keys":["ctrl+b"],
 		"command":"run_nim",
@@ -34,11 +38,7 @@
 		]
 	},
 
-
-	// Some other commands you might want to assign to a key.
-	
 	// Run in release mode
-	/*
 	{
 		"keys":["ctrl+alt+b"],
 		"command":"run_nim",
@@ -70,6 +70,5 @@
 	},
 	*/
 
-	
 
 ]
