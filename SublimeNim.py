@@ -388,7 +388,10 @@ def execute_nim_command_on_file(commands,comobj):
 		proc.terminate()
 
 	com = commands
-	com.append(filepath)
+	if not isWindows:
+		com.append("\""+ filepath +"\"")
+	else:
+		com.append(filepath)
 
 	# "--stdout:on"
 	if settings.get("sublimenim.use_terminus"):
@@ -400,7 +403,7 @@ def execute_nim_command_on_file(commands,comobj):
 	comobj.window.destroy_output_panel("compilation")
 	new_view = comobj.window.create_output_panel("compilation",False)
 	comobj.window.run_command("show_panel", {"panel": "output.compilation"})
-	
+
 	def async_fill():
 		while proc.poll() is None:
 			time.sleep(0.01)
