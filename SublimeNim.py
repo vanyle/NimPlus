@@ -84,7 +84,6 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 			return
 
 		filepath = view.file_name()
-		print(filepath)
 		if type(filepath) != str or not view.match_selector(0, "source.nim"):
 			return
 		if filepath.endswith(".nimble"):
