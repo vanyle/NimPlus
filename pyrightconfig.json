@@ -1,7 +1,11 @@
 {
 	"typeCheckingMode": false,
+	"reportOptionalMemberAccess": false,
 	"reportMissingImports": true,
 	"pythonVersion":"3.8.10",
 	"pythonPath":"C:\\Program Files\\Sublime Text",
-	"stubPath": "C:\\Program Files\\Sublime Text\\Lib\\python38"
+	"stubPath": "C:\\Program Files\\Sublime Text\\Lib\\python38",
+	"extraPaths":[
+		".."
+	]
 } 

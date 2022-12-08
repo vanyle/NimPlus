@@ -7,24 +7,19 @@ import webbrowser
 from threading import Thread
 from queue import Queue
 
-# from nimsuggest import Nimsuggest
-# from docdisplay import cpublish_string
+from SublimeNim.nimsuggest import Nimsuggest, SymbolDefinition
+from SublimeNim.docdisplay import cpublish_string
 
-def cpublish_string(s):
-	# A custom RST parser for poor people.
-	# I won't use docutils.
-	s = s.replace("\n","<br/>")
-	s = s.replace("\\'","'")
-	s = s.replace("\\\"","\"")
-	return s
+isWindows = sys.platform == "win32"
+settings = sublime.load_settings('sublime_nim.sublime-settings')
+suggestionEngine = None # Can be a nimsuggest instance if needed.
+temporaryDisableSaveCheck = False
 
 def enqueue_output(out, queue):
 	for line in iter(out.readline, b''):
 		queue.put(line)
 		# print("SublimeNim:",queue.qsize(),line)
 	out.close()
-
-package_name = 'SublimeNim'
 
 # Used for executable management
 def start(args,outputManager = False,cwd = None):
@@ -51,19 +46,6 @@ def start(args,outputManager = False,cwd = None):
 	# todo: close t when p dies
 	return p,q,q2
 
-def read(process):
-	return process.stdout.readline().decode("utf-8").strip()
-
-
-def write(process, message):
-	try:
-		process.stdin.write(message.strip().encode("utf-8"))
-		process.stdin.write("\r\n".encode("utf-8"))
-		process.stdin.flush()
-		return True
-	except:
-		return False # error probably because the process died.
-
 def terminate(process):
 	process.stdin.close()
 	process.terminate()
@@ -73,59 +55,10 @@ def escape(html):
 	return html.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&#39;')
 
 
-suggest_process = None
-suggest_out = None
-settings = None
-
-def attempt_start_suggest(filepath):
-	global suggest_process,suggest_out
-	if suggest_process == None:
-		# Don't run the suggest on start up, just once a file is saved.
-		suggest_process,suggest_out, dump = start(["nimsuggest.exe","--stdin","--debug",filepath],True)
-		time.sleep(1)
-		while not suggest_out.empty(): # flush read.
-			suggest_out.get(block=False)
-
-
-def fetch_suggestions(filepath,line,col):
-	global suggest_process,suggest_out
-	attempt_start_suggest(filepath)
-
-	line += 1 # line are 1-indexed for nim.
-	query = "sug \"" + filepath + "\":" + str(line) + ":" + str(col)
-	while not suggest_out.empty(): # flush
-		suggest_out.get(block=False)
-
-	res = write(suggest_process,query)
-	if not res: # process died
-		suggest_process = None
-		return
-	while suggest_out.empty():
-		time.sleep(.01)
-	try:
-		suggestions = []
-		while not suggest_out.empty(): # flush read.
-			tmp = suggest_out.get(block=False,timeout=1)
-			data = tmp.decode("utf-8").split("\t")
-			# print("SublimeNim:",len(data),data)
-			if len(data) == 10:
-				suggestions.append(data)
-			if len(suggestions) > 1000:
-				break # no need for tones of suggestions.
-
-		while not suggest_out.empty(): suggest_out.get(block=False,timeout=1)
-		return suggestions
-		
-	except Exception as err:
-		print("SublimeNim:","Unexpected error:", sys.exc_info()[0])
-		return []
-
 # Hook to Package Manager events !
 
 def plugin_loaded():
 	global settings
-	from package_control import events
-	settings = sublime.load_settings('sublime_nim.sublime-settings')
 
 	#if events.install(package_name):
 		# print("SublimeNim:",'Installed %s!' % events.install(package_name))
@@ -133,28 +66,26 @@ def plugin_loaded():
 		# print("SublimeNim",'Upgraded to %s!' % events.post_upgrade(package_name))
 
 def plugin_unloaded():
-	from package_control import events
-	global suggest_process
+	global suggestionEngine
 
-	# Clean up:
-	if suggest_process != None:
+	# Clean up
+	if suggestionEngine != None:
 		try:
-			terminate(suggest_process)
+			suggestionEngine.terminate()
 		except:
 			pass
-		suggest_process = None
-
-
-if int(sublime.version()) < 3000:
-	plugin_loaded()
-	unload_handler = plugin_unloaded
-
+		suggestionEngine = None
 
 maxErrorRegionCount = 0
+error_body_table = {}
+
 class SublimeNimEvents(sublime_plugin.EventListener):
-	def on_post_save_async(self,view):
+	def on_post_save_async(self,view: sublime.View):
 		global maxErrorRegionCount,settings
 		if not settings.get("sublimenim.savecheck"):
+			return
+
+		if temporaryDisableSaveCheck:
 			return
 
 		filepath = view.file_name()
@@ -165,7 +96,7 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 
 		nim_args = settings.get("sublimenim.nim.arguments")
 
-		nim_checking_command = ["nim.exe","check"] + nim_args
+		nim_checking_command = ["nim","check"] + nim_args
 		nim_checking_command.append(filepath)
 
 		check_process = start(nim_checking_command)[0]
@@ -177,7 +108,10 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 			return
 
 		for i in range(maxErrorRegionCount+1):
-			view.erase_regions("e" + str(i))
+			regionId = "e" + str(i)
+			if regionId in error_body_table:
+				del error_body_table[regionId]
+			view.erase_regions(regionId)
 
 		lines = stdout.decode("utf-8").split("\n")
 		maxErrorRegionCount = 0
@@ -197,6 +131,10 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 				msg_type = description.split(":")[0]
 
 				pointStart = view.text_point(line-1,col-1)
+				# To compute point end,
+				# we need to find the token length as errors seem to
+				# always span exactly one token in Nim.
+				wordRegion = view.word(pointStart)
 
 				regionId = "e" + str(maxErrorRegionCount)
 				maxErrorRegionCount += 1
@@ -209,141 +147,169 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 				rcolor = "#f00" if msg_type.strip() == "Error" else "#00f"
 				regcolor = "region.redish" if msg_type.strip() == "Error" else "region.cyanish"
 
+				region_draw_flag = sublime.DRAW_SQUIGGLY_UNDERLINE + sublime.DRAW_NO_FILL + sublime.DRAW_NO_OUTLINE
+				error_body_table[regionId] = description
+
 				view.add_regions(
-					regionId,
-					[sublime.Region(pointStart, pointStart)],
-					"region.redish",
-					"comment",
-					sublime.DRAW_EMPTY,
-					[description], # HTML format
-					rcolor,
-					on_navigate,
-					on_close) # left border
+					key=regionId,
+					regions=[wordRegion],
+					scope=regcolor,
+					icon="panel_close", # a 'x' icon
+					flags=region_draw_flag,
+				#	annotations=[description], # HTML format
+					annotation_color=rcolor,
+					on_navigate=on_navigate,
+					on_close=on_close) # left border
+				
 			terminate(check_process)
 		view.window().status_message("Check completed.")
-	def on_hover(self, view, point, hover_zone):
+
+	def on_hover(self, view: sublime.View, point, hover_zone):
 		# Show documentation and handle the "GOTO definition"
-		global settings
+		global settings, suggestionEngine
 		if not settings.get("sublimenim.hoverdescription"):
 			return
 		filepath = view.file_name()
 		if type(filepath) != str or not view.match_selector(point, "source.nim"):
 			return
-		global suggest_process,suggest_out
-		attempt_start_suggest(filepath)
-			
-		line,col = view.rowcol(point)
-		line += 1 # line are 1-indexed for nim.
-		query = "def \"" + filepath + "\":" + str(line) + ":" + str(col)
 
-		while not suggest_out.empty(): # flush
-			suggest_out.get(block=False)
+		def on_navigate(href):
+			file,line,col = href.split(",")
+			affected_view = view
+			if file != filepath:
+				affected_view = view.window().open_file(file)
+			def navigator(aview,line,col):
+				counter = 0
+				while aview.is_loading() and counter < 100:
+					time.sleep(0.03) # 30 ms
+					counter += 1
+				line = int(line)-1
+				col = int(col)
+				aview.show(aview.text_point(line,col),True,False,False)
 
-		res = write(suggest_process,query)
-		if not res: # process died
-			suggest_process = None
-			return
-		while suggest_out.empty():
-			time.sleep(.01)
-		try:
-			data = []
-			while not suggest_out.empty(): # flush read.
-				tmp = suggest_out.get(block=False,timeout=1)
-				data = tmp.decode("utf-8").split("\t")
-				if len(data) == 9:
-					break
-
-			# data[1] = skVar
-			# data[2] = filename.symbolname
-			# data[3] = type
-			# data[4] = file of definition
-			# data[5] = line of definition
-			# data[6] = col of definition
-			# data[7] = Doc string
-			if len(data) == 9:
-				docstr = data[7].replace("\\x0A","\n")[1:-1]
-				docstr = escape(docstr)
-				docstr = cpublish_string(docstr)
-				# Convert RST to HTML.
-
-				body = """
-					<style>
-						h4{ margin:0;padding:0; }
-					</style>
-					<h4>%s</h4>
-					<div>
-					<a href="%s,%s,%s">%s(%s,%s)</a>
-					</div>
-					<div>
-						%s
-					</div>
-				""" % (escape(data[3]),
-						data[4],data[5],data[6],
-						data[4],data[5],data[6],
-						docstr) # docstr are rst formatted.
-
-				def on_navigate(href):
-					file,line,col = href.split(",")
-					affected_view = view
-					if file != filepath:
-						affected_view = view.window().open_file(file)
-					def navigator(aview,line,col):
-						counter = 0
-						while aview.is_loading() and counter < 100:
-							time.sleep(0.03) # 30 ms
-							counter += 1
-						line = int(line)-1
-						col = int(col)
-						aview.show(aview.text_point(line,col),True,False,False)
-
-					# Do this on another thread:
-					t = Thread(target=navigator, args=(affected_view, line,col))
-					t.daemon = True # thread dies with the program
-					t.start()
-				def on_hide():
-					pass
-				view.show_popup(
-					body,
-					sublime.HIDE_ON_MOUSE_MOVE_AWAY,
-					point,
-					600,
-					100,
-					on_navigate,
-					on_hide
-				)
-		except Exception as err:
-			print("SublimeNim:","Unexpected error:")
-			traceback.print_exc()
+			# Do this on another thread:
+			t = Thread(target=navigator, args=(affected_view, line,col))
+			t.daemon = True # thread dies with the program
+			t.start()
+		def on_hide():
 			pass
+
+		popup_flags = sublime.HIDE_ON_MOUSE_MOVE_AWAY
+
+		for i in range(maxErrorRegionCount+1):
+			regionId = "e" + str(i)
+			regions = view.get_regions(regionId)
+			if len(regions) == 0: break
+			r = regions[0]
+			if r.contains(point):
+				errText = "Error"
+				if regionId in error_body_table:
+					errText = error_body_table[regionId]
+				view.show_popup(
+					content=errText,
+					flags=popup_flags,
+					location=point,
+					max_width=600,
+					max_height=150,
+					on_navigate=on_navigate,
+					on_hide=on_hide
+				)
+				return
+
+		if suggestionEngine == None:
+			suggestionEngine = Nimsuggest(filepath)
+		suggestionEngine.tryRestart()
+
+		# Check if the mouse is over an error.
+		# In that case, show the error.
+
+		def on_result(suggestion: SymbolDefinition):
+			if suggestion == None:
+				return
+			docstr = suggestion.docstring.replace("\\x0A","\n")[1:-1]
+			docstr = escape(docstr)
+			docstr = cpublish_string(docstr)
+			# Convert RST to HTML.
+			
+			body = """
+				<body id="sublime_nim">
+				<style>
+					h4{
+						background-color: color(var(--background) alpha(0.25));
+						margin: 0;
+						padding: 5px;
+					}
+					#sublime_nim code{
+						font-family: "Consolas", monospace;
+					}
+					#sublime_nim{
+						margin: 0;
+						padding: 0;
+					}
+					#sublime_nim #desc_block{
+						padding: 5px;
+						font-family: "Roboto", "Lato", Arial, sans-serif;
+					}
+				</style>
+				<h4>%s</h4>
+				<div id="desc_block">
+				<a href="%s,%s,%s">
+					%s(%s,%s)
+				</a>
+				<div>
+					%s
+				</div>
+				</div>
+				</body>
+			""" % (
+				escape(suggestion.symbolType),
+				suggestion.filename,suggestion.line,suggestion.col,
+				suggestion.filename,suggestion.line,suggestion.col,
+				docstr
+			)
+
+			view.show_popup(
+				content=body,
+				flags=popup_flags,
+				location=point,
+				max_width=600,
+				max_height=150,
+				on_navigate=on_navigate,
+				on_hide=on_hide
+			)
+		
+		line,col = view.rowcol(point)
+		suggestionEngine.requestDefinition(filepath, line, col, on_result)
+
+
 	def on_query_completions(self, view, prefix, locations):
-		global settings
+		global settings, suggestionEngine, temporaryDisableSaveCheck
 		
 		if not settings.get("sublimenim.autocomplete"):
 			return
 		# don't offer anything for multiple cursors
 		if len(locations) > 1:
 			return ([], 0)
-
 		filepath = view.file_name()
 		if type(filepath) != str or not view.match_selector(locations[0], "source.nim"):
 			return
 
-		global suggest_process,suggest_out
+		if suggestionEngine == None:
+			suggestionEngine = Nimsuggest(filepath)
+		suggestionEngine.tryRestart()
 		
 		line,col = view.rowcol(locations[0])
-
 		# Needed for async completion instead of regular []
-		lst = sublime.CompletionList()
+		lst = sublime.CompletionList(flags = sublime.INHIBIT_WORD_COMPLETIONS)
 
 		# Fetch the suggestions async.
-		def fillCompletions(lst, prefix):
+		def fillCompletions(suggestions):
+			global ready
 			# We need to save the file for nimsuggest to work properly here.
 			# view.run_command("save")
-			suggestions = fetch_suggestions(filepath,line,col)
 			completions = []
+			print("completions: ",suggestions)
 			
-			print("pref: ",prefix)
-
 			for i in suggestions:
 				# i[1] = skMacro, skProc, skType, skIterator, skTemplate, skFunc
 				#        skEnumField, skConst, skVar, skLet
@@ -373,12 +339,13 @@ class SublimeNimEvents(sublime_plugin.EventListener):
 					kind = kind # icon on the left.
 				)
 				completions.append(item)
+			
+			print("lst.set_completions")
 			lst.set_completions(completions, sublime.INHIBIT_WORD_COMPLETIONS)
 
-		t = Thread(target=fillCompletions, args=(lst,prefix,))
-		t.daemon = True
-		t.start()
-
+		print("Requesting completions")
+		suggestionEngine.requestSuggestion(filepath, line, col, fillCompletions)
+		
 		return lst
 
 proc = None

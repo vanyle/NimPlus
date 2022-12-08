@@ -1,0 +1,31 @@
+{
+	"cmd": ["nim", "r", "$file"],
+	"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+	"selector": "source.nim",
+
+	"env": {"PYTHONIOENCODING": "utf-8"},
+
+	"windows": {
+		"cmd": ["nim", "r", "$file"],
+	},
+
+	"variants":
+	[
+		{
+			"name": "Syntax Check",
+			"cmd": ["nim", "check", "$file"],
+
+			"windows": {
+				"cmd": ["nim", "check", "$file"],
+			}
+		},
+		{
+			"name": "Compile without running",
+			"cmd": ["nim", "c", "-d:debug", "$file"],
+		},
+		{
+			"name": "Compile in release mode",
+			"cmd": ["nim", "c", "-d:release", "$file"],
+		}
+	]
+}
