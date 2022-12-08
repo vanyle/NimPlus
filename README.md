@@ -9,6 +9,8 @@ Requires version 4073 or higher.
 - A: NimLime dropped support for NimSuggest and Nimble (in order to update to Sublime Text 3 if I understand currently.)
 The project looks dead now (or at least, it's not updated much), so I decided to create my own nim package which targets *Sublime Text 4* and makes use of all the cool new APIs.
 
+Supports Window and Linux. Other OS might work but I haven't tested.
+
 Features
 --------
 
