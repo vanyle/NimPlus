@@ -1,4 +1,4 @@
-SublimeNim
+NimPlus (SublimeNim)
 =======
 
 Nim Programming Language plugin for Sublime Text 4
@@ -6,10 +6,10 @@ Nim Programming Language plugin for Sublime Text 4
 Requires version 4073 or higher.
 
 - Q: Why not use NimLime ?
-- A: NimLime dropped support for NimSuggest and Nimble (in order to update to Sublime Text 3 if I understand currently.)
-The project looks dead now (or at least, it's not updated much), so I decided to create my own nim package which targets *Sublime Text 4* and makes use of all the cool new APIs.
+- A: NimLime dropped support for NimSuggest and Nimble. It now focuses on providing language highlighting support.
+The goal of NimPlus is to have IDE like support for Nim including autocompletion, type information tooltips and more (see the Features section)
 
-Supports Window and Linux. Other OS might work but I haven't tested.
+We currently support Window and Linux. Other OS might work but aren't tested.
 
 Features
 --------
@@ -35,14 +35,22 @@ If you have other packages installed, you probably also have already installed *
 2. Select `Package Control: Add repository`
 3. Enter URL: https://github.com/vanyle/SublimeNim
 4. `Install package` 
-5. `SublimeNim` 
+5. `NimPlus` 
 6. `Enter`
+
+Naming: NimPlus (or SublimeNim?)
+--------------------------------
+
+This package was originally named *SublimeNim*. In order to not change the github URL for existing users, the
+name of the repository will remain *SublimeNim* but the official name (the one you can use to install the package)
+will remain *NimPlus*.
+
 
 Settings, Usage and Tips
 ------------------------
 
-To see what SublimeNim is capable of, open the *Command Palette* (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> ), and type `SublimeNim`.
-This will list most SublimeNim features.
+To see what NimPlus is capable of, open the *Command Palette* (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> ), and type `NimPlus`.
+This will list most NimPlus features.
 
 
 You can install the `ANSIescape` package to enjoy the syntax coloring of the terminal when building.
@@ -52,23 +60,23 @@ Depending on how much you want Sublime to behave as an IDE or as a text editor, 
 You can see all the toggles inside your preference file.
 
 Open it with: 
-<kbd>Preferences</kbd> > <kbd>Package Settings</kbd> > <kbd>SublimeNim</kbd> > <kbd>Settings - Default</kbd>
+<kbd>Preferences</kbd> > <kbd>Package Settings</kbd> > <kbd>NimPlus</kbd> > <kbd>Settings - Default</kbd>
 
 ### Error highlighting
 
-Toggle with `sublimenim.savecheck`
+Toggle with `nimplus.savecheck`
 
 After saving, will check the current file for errors. See screenshot above.
 
 ### Tooltips
 
-Toggle with `sublimenim.hoverdescription`
+Toggle with `nimplus.hoverdescription`
 
 Will show the types and the docstring of the variable and procedure you hover over.
 
 ### Auto completion
 
-Toggle with `sublimenim.autocomplete`
+Toggle with `nimplus.autocomplete`
 
 Will propose completion options based on `nimsuggest`'s `sug` feature.
 
@@ -81,7 +89,7 @@ You need to enable `autocompletion` in *Sublime Text* settings
 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> : Compile the current nimble project   
 
 You can change these with:  
-<kbd>Preferences</kbd> > <kbd>Package Settings</kbd> > <kbd>SublimeNim</kbd> > <kbd>Key Bindings - Default</kbd>
+<kbd>Preferences</kbd> > <kbd>Package Settings</kbd> > <kbd>NimPlus</kbd> > <kbd>Key Bindings - Default</kbd>
 
 Possible configuration:
 ```js
@@ -109,13 +117,13 @@ You might want to change this behavior. The first settings controls the regular 
 // `["start","powershell","-Command"]` => Use Powershell
 {
 	// other values ...
-	"sublimenim.nim.console":["wt"],
-	"sublimenim.nimble.console":["wt"]
+	"nimplus.nim.console":["wt"],
+	"nimplus.nimble.console":["wt"]
 }
 ```
 
-By default, SublimeNim does not use the *Build System* integrated into Sublime Text.
-Instead, SublimeNim uses custom commands that perform the building. This allows us
+By default, NimPlus does not use the *Build System* integrated into Sublime Text.
+Instead, NimPlus uses custom commands that perform the building. This allows us
 to control what terminal is used to run the command and other options.
 
 If you prefer using *Build System*, comment the lines inside the `Key Bindings - Default` files
@@ -133,7 +141,7 @@ inside Sublime Text with colored output and interaction and evverything.
 If it is installed, you can run your programs inside of it instead of the default output panel with
 the config switch
 ```js
-"sublimenim.use_terminus": true
+"nimplus.use_terminus": true
 ```
 
 Contributing

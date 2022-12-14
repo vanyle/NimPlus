@@ -10,7 +10,7 @@
                 "children":
                 [
                     {
-                        "caption": "SublimeNim",
+                        "caption": "NimPlus",
                         "children":
                         [
                             {
@@ -56,14 +56,14 @@
                 "children":
                 [
                     {
-                        "caption": "SublimeNim",
+                        "caption": "NimPlus",
                         "children":
                         [
                             {
                                 "caption":"Settings",
                                 "command": "edit_settings",
                                 "args":{
-                                    "base_file": "${packages}/SublimeNim/sublime_nim.sublime-settings",
+                                    "base_file": "${packages}/NimPlus/sublime_nim.sublime-settings",
                                     "default": "{\n\t$0\n}\n"
                                 }
                             },
@@ -71,7 +71,7 @@
                                 "caption": "Key Bindings",
                                 "command": "edit_settings",
                                 "args": {
-                                    "base_file": "${packages}/SublimeNim/Default.sublime-keymap",
+                                    "base_file": "${packages}/NimPlus/Default.sublime-keymap",
                                     "user_file": "${packages}/User/Default.sublime-keymap",
                                     "default": "[\n\t$0\n]\n"
                                 },
@@ -82,7 +82,7 @@
                                 "caption": "Github",
                                 "command": "sublime_nim_open_site",
                                 "args": {
-                                    "url": "http://github.com/vanyle/SublimeNim"
+                                    "url": "http://github.com/vanyle/NimPlus"
                                 }
                             }
                         ]

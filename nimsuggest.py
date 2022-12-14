@@ -19,8 +19,8 @@ nimsuggest_options = [
 	"--maxresults:100"
 ]
 
-if settings.get("sublimenim.nimsuggest.options"):
-	nimsuggest_options = settings.get("sublimenim.nimsuggest.options")
+if settings.get("nimplus.nimsuggest.options"):
+	nimsuggest_options = settings.get("nimplus.nimsuggest.options")
 
 def output_to_queue(output_stream, queue):
 	if not isWindows:
@@ -174,7 +174,7 @@ class Nimsuggest:
 					sd.raw = data
 					callback(sd)
 			except Exception as err:
-				print("SublimeNim:","Unexpected error:", sys.exc_info()[0])
+				print("NimPlus:","Unexpected error:", sys.exc_info()[0])
 				print(err)
 				callback(None)
 		# line are 1-indexed for nim.
@@ -216,7 +216,7 @@ class Nimsuggest:
 				callback(suggestions)
 				return
 			except Exception as err:
-				print("SublimeNim:","Unexpected error:", sys.exc_info()[0])
+				print("NimPlus:","Unexpected error:", sys.exc_info()[0])
 				print(err)
 				callback([])
 

@@ -1,63 +1,63 @@
 [
 	{
-		"caption": "SublimeNim: Compile the current Nim file",
+		"caption": "NimPlus: Compile the current Nim file",
 		"command": "compile_nim"
 	},
 	{
-		"caption": "SublimeNim: Compile the current Nim file in release mode",
+		"caption": "NimPlus: Compile the current Nim file in release mode",
 		"command": "compile_nim",
 		"args":{
 			"arguments":["-d:release"]
 		}
 	},
 	{
-		"caption":"SublimeNim: Compile and Run the current Nim file",
+		"caption":"NimPlus: Compile and Run the current Nim file",
 		"command":"run_nim"
 	},
 	{
-		"caption": "SublimeNim: (Nimble) Compile the Nim project",
+		"caption": "NimPlus: (Nimble) Compile the Nim project",
 		"command": "compile_nimble"
 	},
 	{
-		"caption":"SublimeNim: (Nimble) Compile and Run the Nim project",
+		"caption":"NimPlus: (Nimble) Compile and Run the Nim project",
 		"command":"run_nimble"
 	},
 	{
-		"caption": "SublimeNim: Generate documentation",
+		"caption": "NimPlus: Generate documentation",
 		"command": "document_nim"
 	},
 	{
-		"caption":"SublimeNim: Open the documentation in the browser",
+		"caption":"NimPlus: Open the documentation in the browser",
 		"command":"open_document_nim"
 	},
 	{
-		"caption": "SublimeNim: (Nimble) Refresh package list",
+		"caption": "NimPlus: (Nimble) Refresh package list",
 		"command": "refresh_nimble"
 	},
 	{
-		"caption": "SublimeNim: (Nimble) Check that the .nimble file is valid",
+		"caption": "NimPlus: (Nimble) Check that the .nimble file is valid",
 		"command": "check_nimble"
 	},
 	{
-		"caption":"SublimeNim: Prettify current file (with nimpretty)",
+		"caption":"NimPlus: Prettify current file (with nimpretty)",
 		"command":"prettify_nim"
 	},
 
 	// Classic plugin things
 
 	{
-		"caption":"Preferences: SublimeNim Settings",
+		"caption":"Preferences: NimPlus Settings",
 		"command": "edit_settings",
 		"args":{
-			"base_file": "${packages}/SublimeNim/sublime_nim.sublime-settings",
+			"base_file": "${packages}/NimPlus/sublime_nim.sublime-settings",
 			"default": "{\n\t$0\n}\n"
 		}
 	},
 	{
-		"caption": "Preferences: SublimeNim Key Bindings",
+		"caption": "Preferences: NimPlus Key Bindings",
 		"command": "edit_settings",
 		"args": {
-			"base_file": "${packages}/SublimeNim/Default.sublime-keymap",
+			"base_file": "${packages}/NimPlus/Default.sublime-keymap",
 			"user_file": "${packages}/User/Default.sublime-keymap",
 			"default": "[\n\t$0\n]\n"
 		},
