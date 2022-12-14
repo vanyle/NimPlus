@@ -7,7 +7,7 @@ from threading import Thread
 import os
 
 isWindows = sys.platform == "win32"
-settings = sublime.load_settings('sublime_nim.sublime-settings')
+settings = sublime.load_settings('NimPlus.sublime-settings')
 
 if not isWindows:
 	import select

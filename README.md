@@ -1,5 +1,6 @@
-NimPlus (SublimeNim)
+NimPlus
 =======
+(Formerly named SublimeNim)
 
 Nim Programming Language plugin for Sublime Text 4
 
@@ -33,17 +34,10 @@ If you have other packages installed, you probably also have already installed *
 
 1. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> 
 2. Select `Package Control: Add repository`
-3. Enter URL: https://github.com/vanyle/SublimeNim
+3. Enter URL: https://github.com/vanyle/NimPlus
 4. `Install package` 
 5. `NimPlus` 
 6. `Enter`
-
-Naming: NimPlus (or SublimeNim?)
---------------------------------
-
-This package was originally named *SublimeNim*. In order to not change the github URL for existing users, the
-name of the repository will remain *SublimeNim* but the official name (the one you can use to install the package)
-will remain *NimPlus*.
 
 
 Settings, Usage and Tips

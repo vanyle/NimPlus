@@ -49,7 +49,7 @@
 		"caption":"Preferences: NimPlus Settings",
 		"command": "edit_settings",
 		"args":{
-			"base_file": "${packages}/NimPlus/sublime_nim.sublime-settings",
+			"base_file": "${packages}/NimPlus/NimPlus.sublime-settings",
 			"default": "{\n\t$0\n}\n"
 		}
 	},

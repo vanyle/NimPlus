@@ -11,7 +11,7 @@ from NimPlus.nimsuggest import Nimsuggest, SymbolDefinition
 from NimPlus.docdisplay import cpublish_string
 
 isWindows = sys.platform == "win32"
-settings = sublime.load_settings('sublime_nim.sublime-settings')
+settings = sublime.load_settings('NimPlus.sublime-settings')
 suggestionEngine = None # Can be a nimsuggest instance if needed.
 
 def enqueue_output(out, queue):
@@ -61,7 +61,7 @@ def escape(html):
 
 def plugin_loaded():
 	global settings
-	settings = sublime.load_settings('sublime_nim.sublime-settings')
+	settings = sublime.load_settings('NimPlus.sublime-settings')
 
 def plugin_unloaded():
 	global suggestionEngine
@@ -239,21 +239,21 @@ class NimPlusEvents(sublime_plugin.EventListener):
 			# Convert RST to HTML.
 			
 			body = """
-				<body id="sublime_nim">
+				<body id="NimPlus">
 				<style>
 					h4{
 						background-color: color(var(--background) alpha(0.25));
 						margin: 0;
 						padding: 5px;
 					}
-					#sublime_nim code{
+					#NimPlus code{
 						font-family: "Consolas", monospace;
 					}
-					#sublime_nim{
+					#NimPlus{
 						margin: 0;
 						padding: 0;
 					}
-					#sublime_nim #desc_block{
+					#NimPlus #desc_block{
 						padding: 5px;
 						font-family: "Roboto", "Lato", Arial, sans-serif;
 					}

@@ -63,7 +63,7 @@
                                 "caption":"Settings",
                                 "command": "edit_settings",
                                 "args":{
-                                    "base_file": "${packages}/NimPlus/sublime_nim.sublime-settings",
+                                    "base_file": "${packages}/NimPlus/NimPlus.sublime-settings",
                                     "default": "{\n\t$0\n}\n"
                                 }
                             },
@@ -80,7 +80,7 @@
                             { "caption": "-" },
                             {
                                 "caption": "Github",
-                                "command": "sublime_nim_open_site",
+                                "command": "nimplus_open_site",
                                 "args": {
                                     "url": "http://github.com/vanyle/NimPlus"
                                 }
