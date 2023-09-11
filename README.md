@@ -33,6 +33,13 @@ Installation
 If you have other packages installed, you probably also have already installed *Package Control*.
 
 1. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> 
+2. `Install package` 
+3. `NimPlus` 
+4. `Enter`
+
+Alternative method:
+
+1. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> 
 2. Select `Package Control: Add repository`
 3. Enter URL: https://github.com/vanyle/NimPlus
 4. `Install package` 

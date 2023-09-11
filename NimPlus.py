@@ -21,12 +21,12 @@ def enqueue_output(out, queue):
 	out.close()
 
 # Used for executable management
-def start(args,outputManager = False,cwd = None):
+def start(args, outputManager = False, cwd = None):
 	# print("NimPlus:","Running: "," ".join(args))
 	if not isWindows:
 		args = [" ".join(args)]
 
-	p = subprocess.Popen(
+	process = subprocess.Popen(
 		args,
 		cwd=cwd,
 		stdin=subprocess.PIPE,
@@ -34,19 +34,20 @@ def start(args,outputManager = False,cwd = None):
 		stderr=subprocess.PIPE,
 		shell=True, bufsize=1
 	)
-	q = None
-	q2 = None
+	stdout_queue = None
+	stderr_queue = None
+
 	if outputManager:
-		q = Queue()
-		q2 = Queue()
-		t = Thread(target=enqueue_output, args=(p.stdout, q))
-		t2 = Thread(target=enqueue_output, args=(p.stderr, q))
+		stdout_queue = Queue()
+		stderr_queue = Queue()
+		t = Thread(target=enqueue_output, args=(process.stdout, stdout_queue))
+		t2 = Thread(target=enqueue_output, args=(process.stderr, stderr_queue))
 		t.daemon = True
 		t2.daemon = True
 		t.start()
 		t2.start()
-	# todo: close t when p dies
-	return p,q,q2
+
+	return process, stdout_queue, stderr_queue
 
 def terminate(process):
 	process.stdin.close()
@@ -79,7 +80,7 @@ error_body_table = {}
 
 class NimPlusEvents(sublime_plugin.EventListener):
 	def on_post_save_async(self,view: sublime.View):
-		global maxErrorRegionCount,settings
+		global settings
 		if not settings.get("nimplus.savecheck"):
 			return
 
@@ -98,78 +99,80 @@ class NimPlusEvents(sublime_plugin.EventListener):
 
 		nim_args = settings.get("nimplus.nim.arguments")
 
-		nim_checking_command = ["nim","check"] + nim_args
-		if not isWindows:
-			nim_checking_command.append("\""+ filepath +"\"")
-		else:
-			nim_checking_command.append(filepath)
+		def check_program(filepath):
+			global maxErrorRegionCount
 
-		check_process = start(nim_checking_command)[0]
-		stdout,stderr = None,None
-		try:
-			stdout,stderr = check_process.communicate(timeout=8)
-		except:
-			view.window().status_message("Check failed. Timeout")
-			return
+			nim_checking_command = ["nim","check"] + nim_args
+			if not isWindows:
+				nim_checking_command.append("\""+ filepath +"\"")
+			else:
+				nim_checking_command.append(filepath)
 
-		for i in range(maxErrorRegionCount+1):
-			regionId = "e" + str(i)
-			if regionId in error_body_table:
-				del error_body_table[regionId]
-			view.erase_regions(regionId)
+			checking_process, _, _ = start(nim_checking_command)
+			stdout, _ = checking_process.communicate()
 
-		lines = stdout.decode("utf-8").split("\n")
-		maxErrorRegionCount = 0
+			for i in range(maxErrorRegionCount+1):
+				regionId = "e" + str(i)
+				if regionId in error_body_table:
+					del error_body_table[regionId]
+				view.erase_regions(regionId)
 
-		for check_message in lines:
-			if len(check_message) > 3 and check_message.startswith(filepath):
-				check_message = check_message[len(filepath):]
-				# (line, col) Verbosity: Decription [Code]
-				end = check_message.find(")")
-				position = check_message[check_message.find("(")+1:end]
-				line,col = position.split(",")
-				line = int(line)
-				col = int(col)
+			lines = stdout.decode("utf-8").split("\n")
+			maxErrorRegionCount = 0
 
-				description = check_message[end+1:]
-				description = escape(description)
-				msg_type = description.split(":")[0]
+			for check_message in lines:
+				if len(check_message) > 3 and check_message.startswith(filepath):
+					check_message = check_message[len(filepath):]
+					# (line, col) Verbosity: Decription [Code]
+					end = check_message.find(")")
+					position = check_message[check_message.find("(")+1:end]
+					line,col = position.split(",")
+					line = int(line)
+					col = int(col)
 
-				pointStart = view.text_point(line-1,col-1)
-				# To compute point end,
-				# we need to find the token length as errors seem to
-				# always span exactly one token in Nim.
-				wordRegion = view.word(pointStart)
+					description = check_message[end+1:]
+					description = escape(description)
+					msg_type = description.split(":")[0]
 
-				regionId = "e" + str(maxErrorRegionCount)
-				maxErrorRegionCount += 1
+					pointStart = view.text_point(line-1,col-1)
+					# To compute point end,
+					# we need to find the token length as errors seem to
+					# always span exactly one token in Nim.
+					wordRegion = view.word(pointStart)
 
-				def on_close():
-					view.erase_regions(regionId)
-				def on_navigate():
+					regionId = "e" + str(maxErrorRegionCount)
+					maxErrorRegionCount += 1
+
+					def on_close():
+						view.erase_regions(regionId)
+					def on_navigate():
+						pass
+
+					rcolor = "#f00" if msg_type.strip() == "Error" else "#00f"
+					regcolor = "region.redish" if msg_type.strip() == "Error" else "region.cyanish"
+
+					region_draw_flag = sublime.DRAW_SQUIGGLY_UNDERLINE + sublime.DRAW_NO_FILL + sublime.DRAW_NO_OUTLINE
+					error_body_table[regionId] = description
+
+					view.add_regions(
+						key=regionId,
+						regions=[wordRegion],
+						scope=regcolor,
+						icon="panel_close", # a 'x' icon
+						flags=region_draw_flag,
+					#	annotations=[description], # HTML format
+						annotation_color=rcolor,
+						on_navigate=on_navigate,
+						on_close=on_close) # left border
+				try:
+					terminate(checking_process)
+				except: # ProcessLookupError mostly.
 					pass
+			view.window().status_message("Check completed.")
 
-				rcolor = "#f00" if msg_type.strip() == "Error" else "#00f"
-				regcolor = "region.redish" if msg_type.strip() == "Error" else "region.cyanish"
-
-				region_draw_flag = sublime.DRAW_SQUIGGLY_UNDERLINE + sublime.DRAW_NO_FILL + sublime.DRAW_NO_OUTLINE
-				error_body_table[regionId] = description
-
-				view.add_regions(
-					key=regionId,
-					regions=[wordRegion],
-					scope=regcolor,
-					icon="panel_close", # a 'x' icon
-					flags=region_draw_flag,
-				#	annotations=[description], # HTML format
-					annotation_color=rcolor,
-					on_navigate=on_navigate,
-					on_close=on_close) # left border
-			try:
-				terminate(check_process)
-			except: # ProcessLookupError mostly.
-				pass
-		view.window().status_message("Check completed.")
+		t = Thread(target=check_program, args=(filepath,))
+		t.daemon = True
+		t.start()
 
 	def on_hover(self, view: sublime.View, point, hover_zone):
 		# Show documentation and handle the "GOTO definition"
@@ -304,7 +307,8 @@ class NimPlusEvents(sublime_plugin.EventListener):
 		if suggestionEngine == None:
 			suggestionEngine = Nimsuggest(filepath)
 		suggestionEngine.tryRestart()
-		
+		view.run_command("save")
+
 		line,col = view.rowcol(locations[0])
 		# Needed for async completion instead of regular []
 		lst = sublime.CompletionList(flags = sublime.INHIBIT_WORD_COMPLETIONS)
@@ -401,7 +405,7 @@ def execute_nim_command_on_file(commands,comobj):
 	else:
 		com.append(filepath)
 
-	proc,stdout,stderr = start(com,True)
+	proc, stdout = start(com,True)
 	comobj.window.destroy_output_panel("compilation")
 	new_view = comobj.window.create_output_panel("compilation",False)
 	comobj.window.run_command("show_panel", {"panel": "output.compilation"})

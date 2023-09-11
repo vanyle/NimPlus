@@ -15,7 +15,7 @@ if not isWindows:
 nimsuggest_options = [
 	"--stdin",
 	"--debug",
-	"--v2",
+	"--v3",
 	"--maxresults:100"
 ]
 
